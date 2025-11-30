@@ -51,7 +51,7 @@ document.addEventListener("DOMContentLoaded", () => {
     return cleaned;
   }
 
-  // ✅ دالة اختيار الرقم وتحديث الحقل وإغلاق الدايلوج
+  // دالة اختيار الرقم وتحديث الحقل وإغلاق الدايلوج
   function selectNumberFromDialog(number) {
     phoneInput.value = cleanPhoneNumber(number);
     numbersDialog.classList.add("hidden");
@@ -59,7 +59,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (typeof clearQR === "function") clearQR();
   }
 
-  // ✅ معالج النقر الموحد لعناصر القائمة
+  // معالج النقر الموحد لعناصر القائمة
   function handleNumberSelection(event) {
     const listItem = event.target.closest("li");
     // التأكد من أن النقر كان على عنصر قائمة (li) يحتوي على رقم
@@ -79,7 +79,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     try {
       const props = ["tel", "name"];
+      // طلب جهة اتصال واحدة فقط
       const opts = { multiple: false };
+
+      // 1. فتح منتقي جهات الاتصال (يغلق تلقائياً بعد الاختيار)
       const contacts = await navigator.contacts.select(props, opts);
 
       if (
@@ -93,17 +96,10 @@ document.addEventListener("DOMContentLoaded", () => {
         const contactName =
           contact.name && contact.name.length ? contact.name[0] : "";
 
-        // حالة رقم واحد فقط
-        if (contact.tel.length === 1) {
-          phoneInput.value = cleanTels[0];
-          if (typeof clearQR === "function") clearQR();
-        }
-        // حالة أرقام متعددة (عرض الـ Dialog)
-        else {
-          displayNumbersDialog(cleanTels, contactName);
-        }
+        // 2. دائماً يتم عرض الـ Dialog، حتى لو كان هناك رقم واحد فقط
+        displayNumbersDialog(cleanTels, contactName);
       } else {
-        alert("خطأ: لم يتم العثور على رقم هاتف في جهة الاتصال.");
+        alert("خطأ: لم يتم العثور على رقم هاتف في جهة الاتصال المختارة.");
       }
     } catch (e) {
       alert("خطأ: تم إلغاء اختيار جهة الاتصال أو حدث خطأ.");
@@ -114,13 +110,13 @@ document.addEventListener("DOMContentLoaded", () => {
   // 4. منطق عرض الـ Dialog
   // =============================================
   function displayNumbersDialog(numbers, name) {
+    // 3. عرض اسم جهة الاتصال في عنوان الدايلوج
     dialogTitle.textContent = `اختر رقم الهاتف ${name ? "(" + name + ")" : ""}`;
 
     // مسح القائمة القديمة
     contactNumbersList.innerHTML = "";
 
-    // ✅ إضافة معالج النقر مرة واحدة للقائمة بالكامل
-    // (للتأكد من عدم تكرار ربط الأحداث)
+    // إضافة معالج النقر مرة واحدة للقائمة بالكامل (للتأكد من ربط الحدث)
     contactNumbersList.removeEventListener("click", handleNumberSelection);
     contactNumbersList.addEventListener("click", handleNumberSelection);
 
@@ -128,17 +124,16 @@ document.addEventListener("DOMContentLoaded", () => {
     numbers.forEach((num) => {
       const listItem = document.createElement("li");
       listItem.textContent = num;
-      // ✅ إضافة الرقم كخاصية بيانات (Data Attribute) للعنصر
+      // إضافة الرقم كخاصية بيانات (Data Attribute) للعنصر
       listItem.dataset.number = num;
 
       // التنسيق (لضمان ظهور مؤشر النقر)
       listItem.style.cursor = "pointer";
 
-      // لا نحتاج لربط حدث النقر هنا، سيتم معالجته بواسطة handleNumberSelection
-
       contactNumbersList.appendChild(listItem);
     });
 
+    // 4. فتح الـ Dialog المخصص
     numbersDialog.classList.remove("hidden");
   }
 
