@@ -1,0 +1,306 @@
+:root {
+  /* الألوان الرئيسية */
+  --primary-color: #0d47a1; /* أزرق داكن جذاب */
+  --primary-hover: #1565c0;
+  --secondary-color: #388e3c; /* أخضر للزر الثانوي/النجاح */
+  --secondary-hover: #4caf50;
+  --background-color: #f4f6f9; /* خلفية فاتحة */
+  --card-background: #ffffff;
+  --text-color: #333333;
+  --border-color: #e0e0e0;
+  --shadow-light: 0 4px 18px rgba(0, 0, 0, 0.08);
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: "Cairo", sans-serif;
+  background: var(--background-color);
+  color: var(--text-color);
+  direction: rtl;
+}
+
+.container {
+  max-width: 1000px;
+  margin: 50px auto;
+  padding: 0 20px;
+  display: grid;
+  grid-template-columns: 1fr 400px;
+  gap: 40px;
+}
+
+@media (max-width: 992px) {
+  .container {
+    grid-template-columns: 1fr;
+    margin: 20px auto;
+  }
+}
+
+.card {
+  background: var(--card-background);
+  padding: 30px;
+  border-radius: 20px;
+  box-shadow: var(--shadow-light);
+  transition: all 0.3s ease;
+  position: relative; /* مهم لزر الإعدادات */
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.header h2 {
+  margin: 0;
+  color: var(--primary-color);
+  font-weight: 700;
+  font-size: 28px;
+  border-bottom: 3px solid var(--primary-color);
+  display: inline-block;
+  padding-bottom: 5px;
+}
+
+label {
+  font-weight: 600;
+  margin-bottom: 8px;
+  display: block;
+  font-size: 15px;
+  color: #555;
+}
+
+.input-group {
+  margin-bottom: 20px;
+}
+
+input[type="text"],
+input[type="number"] {
+  width: 100%;
+  padding: 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  font-size: 16px;
+  transition: 0.3s;
+  box-sizing: border-box;
+  background-color: #fdfdfd;
+}
+
+input[type="text"]:focus,
+input[type="number"]:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(13, 71, 161, 0.15);
+  outline: none;
+  background-color: var(--card-background);
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-top: 25px;
+}
+
+.btn {
+  padding: 15px 25px;
+  border: 0;
+  border-radius: 12px;
+  font-size: 17px;
+  font-weight: 700;
+  color: #fff;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.1s ease;
+  text-align: center;
+}
+
+.btn:active {
+  transform: scale(0.98);
+}
+
+.btn-primary {
+  background: var(--primary-color);
+}
+
+.btn-primary:hover {
+  background: var(--primary-hover);
+}
+
+.btn-secondary {
+  background: var(--secondary-color);
+}
+
+.btn-secondary:hover {
+  background: var(--secondary-hover);
+}
+
+/* زر الإعدادات العائم */
+#settingsBtn {
+  position: absolute;
+  top: 25px;
+  left: 25px;
+  width: 45px;
+  height: 45px;
+  background: #f1f1f1;
+  color: #555;
+  border: none;
+  border-radius: 50%;
+  font-size: 20px;
+  cursor: pointer;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  transition: 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#settingsBtn:hover {
+  background: #e0e0e0;
+  color: var(--primary-color);
+}
+
+/* قسم الـ QR */
+.qr-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.qr-box {
+  width: 100%;
+  max-width: 350px;
+  height: 350px;
+  background: var(--card-background);
+  border-radius: 20px;
+  box-shadow: var(--shadow-light);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 15px;
+  margin-top: 15px;
+  transition: 0.4s ease-in-out;
+}
+
+.qr-placeholder {
+  color: #aaa;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+/* تأثير ظهور الـ QR */
+.fade-in {
+  animation: fadeIn 0.4s ease-in-out;
+}
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* معلومات الكود ونسخه */
+.code-info {
+  margin-top: 20px;
+  text-align: center;
+  display: none;
+}
+
+.code-info p {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 10px;
+  color: #555;
+}
+
+#ussdCode {
+  font-family: monospace;
+  font-size: 18px;
+  padding: 8px 15px;
+  background: #eee;
+  border-radius: 8px;
+  display: inline-block;
+  border: 1px dashed #ccc;
+}
+
+#copyBtn {
+  margin-top: 15px;
+  padding: 10px 20px;
+  background: var(--primary-color);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+#copyBtn:hover {
+  background: var(--primary-hover);
+}
+
+/* الـ Dialog المنبثق للإعدادات */
+.dialog-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.dialog-content {
+  background: var(--card-background);
+  padding: 30px;
+  border-radius: 16px;
+  width: 90%;
+  max-width: 400px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.dialog-content h3 {
+  margin-top: 0;
+  color: var(--primary-color);
+  border-bottom: 2px solid var(--border-color);
+  padding-bottom: 10px;
+  margin-bottom: 20px;
+}
+
+#savePrefixBtn {
+  width: 100%;
+  margin-top: 20px;
+  padding: 12px;
+  border-radius: 10px;
+  background: var(--primary-color);
+  color: #fff;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+#savePrefixBtn:hover {
+  background: var(--primary-hover);
+}

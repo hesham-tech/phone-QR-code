@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>مولّد QR لكود تحويل الأموال (USSD) - تصميم احترافي</title>
+
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+    />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+    <link rel="stylesheet" href="style.css" />
+  </head>
+
+  <body>
+    <div id="settingsDialog" class="dialog-backdrop">
+      <div class="dialog-content">
+        <h3>⚙️ إعدادات كود (USSD)</h3>
+        <div class="input-group">
+          <label for="prefixInput">رمز الكود الافتراضي</label>
+          <input
+            id="prefixInput"
+            type="text"
+            placeholder="مثال: *9*7*"
+            value=""
+          />
+        </div>
+        <button id="savePrefixBtn">💾 حفظ الإعدادات</button>
+      </div>
+    </div>
+
+    <div class="container">
+      <div class="input-card card">
+        <button id="settingsBtn" title="إعدادات كود USSD">
+          <i class="fas fa-cog"></i>
+        </button>
+
+        <div class="header">
+          <h2>✨ مولّد كود QR للتحويل (USSD)</h2>
+        </div>
+
+        <div class="form-grid">
+          <div class="input-group">
+            <label for="phone">رقم المستفيد</label>
+            <input
+              id="phone"
+              list="savedNumbers"
+              type="text"
+              placeholder="مثال: 01007888009"
+              inputmode="numeric"
+            />
+            <datalist id="savedNumbers"></datalist>
+          </div>
+
+          <div class="input-group">
+            <label for="amount">المبلغ (اختياري)</label>
+            <input id="amount" type="number" placeholder="مثال: 500" min="1" />
+          </div>
+
+          <div class="input-group">
+            <input id="displayPrefix" type="hidden" readonly disabled />
+          </div>
+        </div>
+
+        <div class="actions">
+          <button class="btn btn-primary" id="gen">
+            ✅ إنشاء QR (بالرقم والمبلغ)
+          </button>
+          <button class="btn btn-secondary" id="genFixed">
+            🔗 إنشاء QR (بالرقم فقط - بدون مبلغ)
+          </button>
+        </div>
+      </div>
+
+      <div class="qr-card card qr-section">
+        <h3>كود الاستجابة السريعة (QR)</h3>
+        <div id="qrBox" class="qr-box">
+          <span class="qr-placeholder">سيظهر الـ QR هنا بعد الإدخال</span>
+        </div>
+
+        <div id="codeInfo" class="code-info">
+          <p>الكود الناتج:</p>
+          <span id="ussdCode"></span>
+          <button id="copyBtn">📋 نسخ الكود</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="script.js"></script>
+
+    <script>
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () => {
+          navigator.serviceWorker
+            .register("/sw.js")
+            .then((registration) => {
+              console.log("Service Worker registered: ", registration.scope);
+            })
+            .catch((err) => {
+              console.error("Service Worker registration failed: ", err);
+            });
+        });
+      }
+    </script>
+  </body>
+</html>
