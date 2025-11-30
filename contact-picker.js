@@ -110,7 +110,6 @@ document.addEventListener("DOMContentLoaded", () => {
     !dialogCancelBtn
   ) {
     log("❌ بعض العناصر غير موجودة", "error");
-    alert("خطأ: بعض عناصر HTML غير موجودة");
     return;
   }
 
@@ -128,7 +127,7 @@ document.addEventListener("DOMContentLoaded", () => {
   );
 
   if (!isContactSupported) {
-    contactPickerBtn.disabled = true;
+    // contactPickerBtn.disabled = true;
     contactPickerBtn.style.display = "none";
     return;
   }
