@@ -9,7 +9,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const dialogTitle = document.getElementById("dialogTitle");
   const dialogCancelBtn = document.getElementById("dialogCancelBtn");
 
-  // يجب التحقق من وجود جميع عناصر الـ Dialog قبل البدء
+  // التحقق من وجود جميع العناصر المطلوبة
   if (
     !contactPickerBtn ||
     !phoneInput ||
@@ -19,7 +19,7 @@ document.addEventListener("DOMContentLoaded", () => {
     !dialogCancelBtn
   ) {
     console.error(
-      "عناصر الإدخال أو الزر (phoneInput/contactPickerBtn/Dialog components) غير موجودة. تأكد من إضافتها لملف index.html."
+      "⚠️ عناصر الإدخال أو الـ Dialog غير موجودة. تأكد من إضافتها في ملف HTML."
     );
     return;
   }
@@ -28,122 +28,211 @@ document.addEventListener("DOMContentLoaded", () => {
   const isContactSupported =
     "contacts" in navigator && typeof navigator.contacts.select === "function";
 
-  // تهيئة الزر بناءً على الدعم
+  // تعطيل الزر إذا لم يكن مدعوماً
   if (!isContactSupported) {
     contactPickerBtn.style.cursor = "not-allowed";
     contactPickerBtn.style.opacity = "0.5";
+    contactPickerBtn.disabled = true;
+    contactPickerBtn.title = "جهازك لا يدعم اختيار جهات الاتصال";
   }
 
   // =============================================
   // 2. دوال المساعدة
   // =============================================
 
+  /**
+   * تنظيف رقم الهاتف من المسافات والرموز والبادئات الدولية
+   */
   function cleanPhoneNumber(num) {
     if (!num) return "";
-    // حذف المسافات وعلامة + وأي رموز أخرى
+
+    // إزالة المسافات والرموز الخاصة
     let cleaned = num.replace(/[\s\(\)\-+]/g, "");
 
-    // إزالة بادئات دولية (تم تبسيط regex قليلاً للحفاظ على المنطق)
+    // إزالة البادئات الدولية الشائعة
     cleaned = cleaned.replace(
-      /^(20|966|971|962|965|968|973|974|21|212|218|249|963|90|1|44|33|49|7|380|39|34|351|355|357|358|359|36|420|421|43|45|46|47|48|52|53|54|55|56|57|58|60|61|62|63|64|65|66|81|82|84|86|7|27|234|237|254|255|256|260|263|264|265|266|267|268)/,
+      /^(20|966|971|962|965|968|973|974|21|212|218|249|963|90|1|44|33|49|7|380|39|34|351|355|357|358|359|36|420|421|43|45|46|47|48|52|53|54|55|56|57|58|60|61|62|63|64|65|66|81|82|84|86|27|234|237|254|255|256|260|263|264|265|266|267|268)/,
       ""
     );
+
     return cleaned;
   }
 
-  // دالة اختيار الرقم وتحديث الحقل وإغلاق الدايلوج
+  /**
+   * اختيار رقم من الـ Dialog وتعيينه في حقل الإدخال
+   */
   function selectNumberFromDialog(number) {
     phoneInput.value = cleanPhoneNumber(number);
-    numbersDialog.classList.add("hidden");
-    // مسح الـ QR (إذا كانت الدالة معرفة)
-    if (typeof clearQR === "function") clearQR();
+    closeDialog();
+
+    // مسح الـ QR إذا كانت الدالة موجودة
+    if (typeof clearQR === "function") {
+      clearQR();
+    }
   }
 
-  // معالج النقر الموحد لعناصر القائمة
+  /**
+   * إغلاق الـ Dialog
+   */
+  function closeDialog() {
+    numbersDialog.classList.add("hidden");
+  }
+
+  /**
+   * معالج النقر الموحد لعناصر القائمة
+   */
   function handleNumberSelection(event) {
     const listItem = event.target.closest("li");
-    // التأكد من أن النقر كان على عنصر قائمة (li) يحتوي على رقم
+
+    // التأكد من أن النقر كان على عنصر قائمة يحتوي على رقم
     if (listItem && listItem.dataset.number) {
       selectNumberFromDialog(listItem.dataset.number);
     }
   }
 
   // =============================================
-  // 3. منطق اختيار جهة الاتصال (Pick Contact)
+  // 3. منطق اختيار جهة الاتصال (Contact Picker)
   // =============================================
+
+  /**
+   * فتح منتقي جهات الاتصال واختيار جهة واحدة
+   */
   async function pickContact() {
     if (!isContactSupported) {
-      alert("خطأ: جهازك لا يدعم اختيار جهات الاتصال.");
+      alert("⚠️ جهازك لا يدعم اختيار جهات الاتصال.\nيرجى إدخال الرقم يدوياً.");
       return;
     }
 
     try {
       const props = ["tel", "name"];
-      // طلب جهة اتصال واحدة فقط
-      const opts = { multiple: false };
+      const opts = { multiple: false }; // اختيار جهة اتصال واحدة فقط
 
-      // 1. فتح منتقي جهات الاتصال (يغلق تلقائياً بعد الاختيار)
+      // 📱 فتح منتقي جهات الاتصال (يغلق تلقائياً بعد الاختيار)
       const contacts = await navigator.contacts.select(props, opts);
 
-      if (
-        contacts &&
-        contacts.length &&
-        contacts[0].tel &&
-        contacts[0].tel.length
-      ) {
-        const contact = contacts[0];
-        const cleanTels = contact.tel.map(cleanPhoneNumber);
-        const contactName =
-          contact.name && contact.name.length ? contact.name[0] : "";
-
-        // 2. دائماً يتم عرض الـ Dialog، حتى لو كان هناك رقم واحد فقط
-        displayNumbersDialog(cleanTels, contactName);
-      } else {
-        alert("خطأ: لم يتم العثور على رقم هاتف في جهة الاتصال المختارة.");
+      // التحقق من وجود جهة اتصال وأرقام
+      if (!contacts || contacts.length === 0) {
+        console.log("ℹ️ لم يتم اختيار أي جهة اتصال");
+        return;
       }
-    } catch (e) {
-      alert("خطأ: تم إلغاء اختيار جهة الاتصال أو حدث خطأ.");
+
+      const contact = contacts[0];
+
+      // التحقق من وجود أرقام هاتف
+      if (!contact.tel || contact.tel.length === 0) {
+        alert("⚠️ جهة الاتصال المختارة لا تحتوي على أرقام هاتف.");
+        return;
+      }
+
+      // تنظيف الأرقام
+      const cleanTels = contact.tel
+        .map(cleanPhoneNumber)
+        .filter((num) => num.length > 0);
+
+      if (cleanTels.length === 0) {
+        alert("⚠️ لم يتم العثور على أرقام صالحة في جهة الاتصال.");
+        return;
+      }
+
+      // الحصول على اسم جهة الاتصال
+      const contactName =
+        contact.name && contact.name.length > 0
+          ? contact.name[0]
+          : "جهة الاتصال";
+
+      // 🎯 عرض الـ Dialog مع الأرقام (حتى لو كان رقم واحد)
+      displayNumbersDialog(cleanTels, contactName);
+    } catch (error) {
+      // المستخدم ألغى الاختيار أو حدث خطأ
+      if (error.name === "AbortError") {
+        console.log("ℹ️ تم إلغاء اختيار جهة الاتصال");
+      } else {
+        console.error("❌ خطأ في اختيار جهة الاتصال:", error);
+        alert("❌ حدث خطأ أثناء اختيار جهة الاتصال. يرجى المحاولة مرة أخرى.");
+      }
     }
   }
 
   // =============================================
   // 4. منطق عرض الـ Dialog
   // =============================================
+
+  /**
+   * عرض الـ Dialog مع أرقام جهة الاتصال
+   */
   function displayNumbersDialog(numbers, name) {
-    // 3. عرض اسم جهة الاتصال في عنوان الدايلوج
-    dialogTitle.textContent = `اختر رقم الهاتف ${name ? "(" + name + ")" : ""}`;
+    // تحديث عنوان الـ Dialog مع اسم جهة الاتصال
+    dialogTitle.textContent = name
+      ? `اختر رقم الهاتف (${name})`
+      : "اختر رقم الهاتف";
 
     // مسح القائمة القديمة
     contactNumbersList.innerHTML = "";
 
-    // إضافة معالج النقر مرة واحدة للقائمة بالكامل (للتأكد من ربط الحدث)
+    // إزالة معالج الحدث السابق لتجنب التكرار
     contactNumbersList.removeEventListener("click", handleNumberSelection);
+
+    // إضافة معالج النقر للقائمة
     contactNumbersList.addEventListener("click", handleNumberSelection);
 
-    // ملء القائمة بالأرقام الجديدة
-    numbers.forEach((num) => {
+    // ملء القائمة بالأرقام
+    numbers.forEach((num, index) => {
       const listItem = document.createElement("li");
       listItem.textContent = num;
-      // إضافة الرقم كخاصية بيانات (Data Attribute) للعنصر
       listItem.dataset.number = num;
-
-      // التنسيق (لضمان ظهور مؤشر النقر)
       listItem.style.cursor = "pointer";
+      listItem.setAttribute("role", "button");
+      listItem.setAttribute("tabindex", "0");
+
+      // إضافة تسمية إذا كان هناك أكثر من رقم
+      if (numbers.length > 1) {
+        listItem.setAttribute("aria-label", `رقم ${index + 1}: ${num}`);
+      }
+
+      // دعم لوحة المفاتيح (Enter أو Space)
+      listItem.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          selectNumberFromDialog(num);
+        }
+      });
 
       contactNumbersList.appendChild(listItem);
     });
 
-    // 4. فتح الـ Dialog المخصص
+    // 🎉 فتح الـ Dialog
     numbersDialog.classList.remove("hidden");
+
+    // التركيز على أول رقم
+    const firstItem = contactNumbersList.querySelector("li");
+    if (firstItem) {
+      firstItem.focus();
+    }
   }
 
   // =============================================
   // 5. ربط الأحداث
   // =============================================
+
+  // ربط زر اختيار جهة الاتصال
   contactPickerBtn.addEventListener("click", pickContact);
 
   // ربط زر إلغاء الـ Dialog
-  dialogCancelBtn.addEventListener("click", () => {
-    numbersDialog.classList.add("hidden");
+  dialogCancelBtn.addEventListener("click", closeDialog);
+
+  // إغلاق الـ Dialog عند الضغط على خلفية الـ Dialog
+  numbersDialog.addEventListener("click", (e) => {
+    if (e.target === numbersDialog) {
+      closeDialog();
+    }
   });
+
+  // إغلاق الـ Dialog عند الضغط على ESC
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && !numbersDialog.classList.contains("hidden")) {
+      closeDialog();
+    }
+  });
+
+  console.log("✅ Contact Picker تم تهيئته بنجاح");
 });
