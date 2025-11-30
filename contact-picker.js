@@ -129,8 +129,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (!isContactSupported) {
     contactPickerBtn.disabled = true;
-    contactPickerBtn.style.opacity = "0.5";
-    alert("جهازك لا يدعم اختيار جهات الاتصال");
+    contactPickerBtn.style.display = "none";
     return;
   }
 
