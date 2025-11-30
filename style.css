@@ -99,15 +99,51 @@ input[type="number"]:focus {
   display: flex;
   align-items: center;
   position: relative;
+  /* هام لضمان تنسيق العناصر الفرعية */
+  width: 100%;
 }
 
+/* تنسيق حقل الإدخال داخل الحاوية */
 .input-with-button input[type="text"] {
-  /* لضمان أخذ الحقل للمساحة المتبقية */
+  /* لضمان أخذ الحقل لكامل المساحة المتبقية */
   flex-grow: 1;
-  /* إلغاء الحافة المدورة من جهة الزر */
+  /* تغيير الهوامش الداخلية والحدود المدورة لدمج الزر به */
+  padding-left: 55px; /* ترك مسافة لظهور الزر */
   border-top-left-radius: 0;
   border-bottom-left-radius: 0;
-  padding-left: 55px; /* لإضافة مسافة من جهة الزر */
+}
+
+/* تنسيق زر أيقونة جهات الاتصال */
+#contactPickerBtn {
+  position: absolute;
+  left: 0; /* وضعه في اليسار (بسبب اتجاه RTL) */
+  top: 1px; /* تعويض 1px لأي حدود خارجية للحقل */
+  bottom: 1px;
+  width: 50px;
+  height: calc(100% - 2px); /* جعله بنفس ارتفاع الحقل (ناقص 2px للحواف) */
+  background: var(--primary-color); /* استخدام اللون الأساسي */
+  color: white;
+  border: none;
+  cursor: pointer;
+  font-size: 20px;
+  border-radius: 10px 0 0 10px; /* جعل الحافة اليسرى مستديرة فقط */
+  transition: background 0.2s;
+
+  /* للتوسيط والدمج */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#contactPickerBtn:hover {
+  background: var(--primary-hover);
+}
+
+/* إخفاء الأيقونة على الشاشات الكبيرة (أكبر من 992px) */
+@media (min-width: 993px) {
+  #contactPickerBtn {
+    display: none;
+  }
 }
 
 #contactPickerBtn {
