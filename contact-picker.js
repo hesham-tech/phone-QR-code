@@ -26,7 +26,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // التحقق من دعم Contact Picker API
   const isContactSupported =
-    "contacts" in navigator && typeof navigator.contacts.select === "function";
+    typeof window !== "undefined" &&
+    "contacts" in navigator &&
+    typeof navigator.contacts.select === "function";
 
   // تعطيل الزر إذا لم يكن مدعوماً
   if (!isContactSupported) {
@@ -42,16 +44,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
   /**
    * تنظيف رقم الهاتف من المسافات والرموز والبادئات الدولية
+   * نفس المنطق الموجود في Vue.js
    */
   function cleanPhoneNumber(num) {
     if (!num) return "";
 
-    // إزالة المسافات والرموز الخاصة
-    let cleaned = num.replace(/[\s\(\)\-+]/g, "");
+    // حذف جميع المسافات وعلامة +
+    let cleaned = num.replace(/\s+/g, "").replace(/^\+/, "");
 
-    // إزالة البادئات الدولية الشائعة
+    // إزالة البادئات الدولية المعروفة (نفس regex الموجود في Vue)
     cleaned = cleaned.replace(
-      /^(20|966|971|962|965|968|973|974|21|212|218|249|963|90|1|44|33|49|7|380|39|34|351|355|357|358|359|36|420|421|43|45|46|47|48|52|53|54|55|56|57|58|60|61|62|63|64|65|66|81|82|84|86|27|234|237|254|255|256|260|263|264|265|266|267|268)/,
+      /^(2|966|971|962|965|968|973|974|21|212|218|249|963|90|1|44|33|49|7|380|39|34|351|355|357|358|359|36|420|421|43|45|46|47|48|52|53|54|55|56|57|58|60|61|62|63|64|65|66|81|82|84|86|7|27|234|237|254|255|256|260|263|264|265|266|267|268|20)/,
       ""
     );
 
@@ -62,13 +65,16 @@ document.addEventListener("DOMContentLoaded", () => {
    * اختيار رقم من الـ Dialog وتعيينه في حقل الإدخال
    */
   function selectNumberFromDialog(number) {
-    phoneInput.value = cleanPhoneNumber(number);
+    phoneNumber = cleanPhoneNumber(number);
+    phoneInput.value = phoneNumber;
     closeDialog();
 
     // مسح الـ QR إذا كانت الدالة موجودة
     if (typeof clearQR === "function") {
       clearQR();
     }
+
+    console.log("✅ تم اختيار الرقم:", phoneNumber);
   }
 
   /**
@@ -91,15 +97,20 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // =============================================
-  // 3. منطق اختيار جهة الاتصال (Contact Picker)
+  // 3. منطق اختيار جهة الاتصال (نفس منطق Vue.js)
   // =============================================
+
+  let phoneNumber = ""; // متغير لحفظ رقم الهاتف
+  let contactNumbers = []; // قائمة أرقام جهة الاتصال
+  let contactName = ""; // اسم جهة الاتصال
 
   /**
    * فتح منتقي جهات الاتصال واختيار جهة واحدة
+   * نفس المنطق الموجود في Vue.js بالضبط
    */
   async function pickContact() {
     if (!isContactSupported) {
-      alert("⚠️ جهازك لا يدعم اختيار جهات الاتصال.\nيرجى إدخال الرقم يدوياً.");
+      alert("❌ جهازك لا يدعم اختيار جهات الاتصال");
       return;
     }
 
@@ -107,49 +118,52 @@ document.addEventListener("DOMContentLoaded", () => {
       const props = ["tel", "name"];
       const opts = { multiple: false }; // اختيار جهة اتصال واحدة فقط
 
-      // 📱 فتح منتقي جهات الاتصال (يغلق تلقائياً بعد الاختيار)
+      console.log("📱 فتح منتقي جهات الاتصال...");
+
+      // فتح منتقي جهات الاتصال
       const contacts = await navigator.contacts.select(props, opts);
 
-      // التحقق من وجود جهة اتصال وأرقام
-      if (!contacts || contacts.length === 0) {
-        console.log("ℹ️ لم يتم اختيار أي جهة اتصال");
-        return;
-      }
+      console.log("✅ تم اختيار جهة الاتصال:", contacts);
 
-      const contact = contacts[0];
+      // التحقق من وجود جهة اتصال وأرقام (نفس شروط Vue)
+      if (
+        contacts &&
+        contacts.length &&
+        contacts[0].tel &&
+        contacts[0].tel.length
+      ) {
+        const contact = contacts[0];
 
-      // التحقق من وجود أرقام هاتف
-      if (!contact.tel || contact.tel.length === 0) {
-        alert("⚠️ جهة الاتصال المختارة لا تحتوي على أرقام هاتف.");
-        return;
-      }
+        // 🎯 المنطق الأساسي من Vue.js:
+        // إذا كان هناك رقم واحد فقط → تعيينه مباشرة
+        if (contact.tel.length === 1) {
+          phoneNumber = cleanPhoneNumber(contact.tel[0]);
+          phoneInput.value = phoneNumber;
 
-      // تنظيف الأرقام
-      const cleanTels = contact.tel
-        .map(cleanPhoneNumber)
-        .filter((num) => num.length > 0);
+          // مسح الـ QR إذا كانت الدالة موجودة
+          if (typeof clearQR === "function") {
+            clearQR();
+          }
 
-      if (cleanTels.length === 0) {
-        alert("⚠️ لم يتم العثور على أرقام صالحة في جهة الاتصال.");
-        return;
-      }
+          console.log("✅ تم تعيين الرقم مباشرة:", phoneNumber);
+        }
+        // إذا كان هناك أكثر من رقم → فتح Dialog
+        else {
+          contactNumbers = contact.tel.map(cleanPhoneNumber);
+          contactName =
+            contact.name && contact.name.length > 0 ? contact.name[0] : "";
 
-      // الحصول على اسم جهة الاتصال
-      const contactName =
-        contact.name && contact.name.length > 0
-          ? contact.name[0]
-          : "جهة الاتصال";
+          console.log("📋 عرض Dialog مع الأرقام:", contactNumbers);
 
-      // 🎯 عرض الـ Dialog مع الأرقام (حتى لو كان رقم واحد)
-      displayNumbersDialog(cleanTels, contactName);
-    } catch (error) {
-      // المستخدم ألغى الاختيار أو حدث خطأ
-      if (error.name === "AbortError") {
-        console.log("ℹ️ تم إلغاء اختيار جهة الاتصال");
+          displayNumbersDialog(contactNumbers, contactName);
+        }
       } else {
-        console.error("❌ خطأ في اختيار جهة الاتصال:", error);
-        alert("❌ حدث خطأ أثناء اختيار جهة الاتصال. يرجى المحاولة مرة أخرى.");
+        alert("❌ لم يتم العثور على رقم هاتف في جهة الاتصال");
       }
+    } catch (error) {
+      // المستخدم ألغى الاختيار
+      console.log("ℹ️ تم إلغاء اختيار جهة الاتصال أو حدث خطأ:", error);
+      alert("⚠️ تم إلغاء اختيار جهة الاتصال أو حدث خطأ");
     }
   }
 
@@ -161,7 +175,7 @@ document.addEventListener("DOMContentLoaded", () => {
    * عرض الـ Dialog مع أرقام جهة الاتصال
    */
   function displayNumbersDialog(numbers, name) {
-    // تحديث عنوان الـ Dialog مع اسم جهة الاتصال
+    // تحديث عنوان الـ Dialog مع اسم جهة الاتصال (نفس Vue)
     dialogTitle.textContent = name
       ? `اختر رقم الهاتف (${name})`
       : "اختر رقم الهاتف";
@@ -184,12 +198,7 @@ document.addEventListener("DOMContentLoaded", () => {
       listItem.setAttribute("role", "button");
       listItem.setAttribute("tabindex", "0");
 
-      // إضافة تسمية إذا كان هناك أكثر من رقم
-      if (numbers.length > 1) {
-        listItem.setAttribute("aria-label", `رقم ${index + 1}: ${num}`);
-      }
-
-      // دعم لوحة المفاتيح (Enter أو Space)
+      // دعم لوحة المفاتيح (Enter)
       listItem.addEventListener("keydown", (e) => {
         if (e.key === "Enter" || e.key === " ") {
           e.preventDefault();
@@ -200,14 +209,16 @@ document.addEventListener("DOMContentLoaded", () => {
       contactNumbersList.appendChild(listItem);
     });
 
-    // 🎉 فتح الـ Dialog
+    // فتح الـ Dialog
     numbersDialog.classList.remove("hidden");
 
     // التركيز على أول رقم
     const firstItem = contactNumbersList.querySelector("li");
     if (firstItem) {
-      firstItem.focus();
+      setTimeout(() => firstItem.focus(), 100);
     }
+
+    console.log("🎉 تم فتح Dialog بنجاح");
   }
 
   // =============================================
@@ -215,10 +226,17 @@ document.addEventListener("DOMContentLoaded", () => {
   // =============================================
 
   // ربط زر اختيار جهة الاتصال
-  contactPickerBtn.addEventListener("click", pickContact);
+  contactPickerBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    pickContact();
+  });
 
   // ربط زر إلغاء الـ Dialog
-  dialogCancelBtn.addEventListener("click", closeDialog);
+  dialogCancelBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    closeDialog();
+  });
 
   // إغلاق الـ Dialog عند الضغط على خلفية الـ Dialog
   numbersDialog.addEventListener("click", (e) => {
@@ -235,4 +253,5 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   console.log("✅ Contact Picker تم تهيئته بنجاح");
+  console.log("📱 الجهاز يدعم Contact Picker:", isContactSupported);
 });
