@@ -142,6 +142,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     numbersDialog.classList.remove("hidden");
+    numbersDialog.style.display = "flex";
     log("🎉 Dialog مفتوح", "success");
   }
 
