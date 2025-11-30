@@ -94,6 +94,48 @@ input[type="number"]:focus {
   background-color: var(--card-background);
 }
 
+/* تنسيقات حاوية حقل الإدخال والزر */
+.input-with-button {
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+.input-with-button input[type="text"] {
+  /* لضمان أخذ الحقل للمساحة المتبقية */
+  flex-grow: 1;
+  /* إلغاء الحافة المدورة من جهة الزر */
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  padding-left: 55px; /* لإضافة مسافة من جهة الزر */
+}
+
+#contactPickerBtn {
+  position: absolute;
+  left: 0; /* وضع الزر على اليسار في تنسيق RTL */
+  top: 0;
+  bottom: 0;
+  width: 50px;
+  background: var(--primary-hover);
+  color: white;
+  border: none;
+  cursor: pointer;
+  font-size: 20px;
+  border-radius: 12px 0 0 12px;
+  transition: background 0.2s;
+  height: 100%;
+}
+
+#contactPickerBtn:hover {
+  background: var(--primary-color);
+}
+
+/* إخفاء الأيقونة على الشاشات الكبيرة (أكبر من 992px) */
+@media (min-width: 993px) {
+  #contactPickerBtn {
+    display: none;
+  }
+}
 .form-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));

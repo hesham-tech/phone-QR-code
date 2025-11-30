@@ -48,13 +48,21 @@
         <div class="form-grid">
           <div class="input-group">
             <label for="phone">رقم المستفيد</label>
-            <input
-              id="phone"
-              list="savedNumbers"
-              type="text"
-              placeholder="الرقم المحول اليه مثال : 01012345678 "
-              inputmode="numeric"
-            />
+
+            <div class="input-with-button">
+              <input
+                id="phone"
+                list="savedNumbers"
+                type="text"
+                placeholder="الرقم المحول اليه مثال : 01012345678 "
+                inputmode="numeric"
+              />
+
+              <button id="contactPickerBtn" title="اختيار من جهات الاتصال">
+                <i class="fas fa-user-circle"></i>
+              </button>
+            </div>
+
             <datalist id="savedNumbers"></datalist>
           </div>
 
@@ -97,7 +105,7 @@
       </div>
     </footer>
     <script src="script.js"></script>
-
+    <script src="contact-picker.js"></script>
     <script>
       if ("serviceWorker" in navigator) {
         window.addEventListener("load", () => {
