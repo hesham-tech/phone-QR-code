@@ -193,3 +193,14 @@ window.onload = () => {
   loadSavedNumbers();
   loadPrefix(); // تحميل وعرض رمز الكود عند بدء التشغيل
 };
+
+// دالة بسيطة بديلة لـ toast
+function showToast(message, type = "error") {
+  // يمكنك هنا استخدام مكتبة تنبيهات أو alert بسيط
+  if (type === "error") {
+    console.error(message);
+    alert("خطأ: " + message);
+  } else {
+    console.log(message);
+  }
+}
