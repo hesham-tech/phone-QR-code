@@ -9,9 +9,17 @@ document.addEventListener("DOMContentLoaded", () => {
   const dialogTitle = document.getElementById("dialogTitle");
   const dialogCancelBtn = document.getElementById("dialogCancelBtn");
 
-  if (!contactPickerBtn || !phoneInput) {
+  // يجب التحقق من وجود جميع عناصر الـ Dialog قبل البدء
+  if (
+    !contactPickerBtn ||
+    !phoneInput ||
+    !numbersDialog ||
+    !contactNumbersList ||
+    !dialogTitle ||
+    !dialogCancelBtn
+  ) {
     console.error(
-      "عناصر الإدخال أو الزر (phoneInput/contactPickerBtn) غير موجودة."
+      "عناصر الإدخال أو الزر (phoneInput/contactPickerBtn/Dialog components) غير موجودة. تأكد من إضافتها لملف index.html."
     );
     return;
   }
@@ -43,10 +51,21 @@ document.addEventListener("DOMContentLoaded", () => {
     return cleaned;
   }
 
+  // ✅ دالة اختيار الرقم وتحديث الحقل وإغلاق الدايلوج
   function selectNumberFromDialog(number) {
     phoneInput.value = cleanPhoneNumber(number);
     numbersDialog.classList.add("hidden");
+    // مسح الـ QR (إذا كانت الدالة معرفة)
     if (typeof clearQR === "function") clearQR();
+  }
+
+  // ✅ معالج النقر الموحد لعناصر القائمة
+  function handleNumberSelection(event) {
+    const listItem = event.target.closest("li");
+    // التأكد من أن النقر كان على عنصر قائمة (li) يحتوي على رقم
+    if (listItem && listItem.dataset.number) {
+      selectNumberFromDialog(listItem.dataset.number);
+    }
   }
 
   // =============================================
@@ -54,7 +73,6 @@ document.addEventListener("DOMContentLoaded", () => {
   // =============================================
   async function pickContact() {
     if (!isContactSupported) {
-      // استخدام دالة alert كبديل لـ toast.error
       alert("خطأ: جهازك لا يدعم اختيار جهات الاتصال.");
       return;
     }
@@ -101,13 +119,23 @@ document.addEventListener("DOMContentLoaded", () => {
     // مسح القائمة القديمة
     contactNumbersList.innerHTML = "";
 
+    // ✅ إضافة معالج النقر مرة واحدة للقائمة بالكامل
+    // (للتأكد من عدم تكرار ربط الأحداث)
+    contactNumbersList.removeEventListener("click", handleNumberSelection);
+    contactNumbersList.addEventListener("click", handleNumberSelection);
+
     // ملء القائمة بالأرقام الجديدة
     numbers.forEach((num) => {
       const listItem = document.createElement("li");
       listItem.textContent = num;
+      // ✅ إضافة الرقم كخاصية بيانات (Data Attribute) للعنصر
+      listItem.dataset.number = num;
+
+      // التنسيق (لضمان ظهور مؤشر النقر)
       listItem.style.cursor = "pointer";
-      // ربط دالة الاختيار بكل عنصر في القائمة
-      listItem.addEventListener("click", () => selectNumberFromDialog(num));
+
+      // لا نحتاج لربط حدث النقر هنا، سيتم معالجته بواسطة handleNumberSelection
+
       contactNumbersList.appendChild(listItem);
     });
 

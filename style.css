@@ -135,6 +135,29 @@ input[type="number"]:focus {
   justify-content: center;
 }
 
+.contact-list {
+  /* ❌ لإزالة علامات التنقيط الافتراضية للقائمة */
+  list-style: none;
+  padding: 0;
+  margin: 15px 0;
+  border-top: 1px solid #eee;
+}
+
+.contact-list li {
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+  font-size: 16px;
+  transition: background-color 0.15s;
+  /* ✅ هام: لإظهار شكل المؤشر كيد عند المرور عليه */
+  cursor: pointer;
+  /* لضمان النص يظهر بشكل جيد في كل الأحوال */
+  text-align: left;
+}
+
+.contact-list li:hover {
+  /* ✅ إظهار تأثير عند المرور على الرقم */
+  background-color: #f5f5f5;
+}
 #contactPickerBtn:hover {
   background: var(--primary-hover);
 }
