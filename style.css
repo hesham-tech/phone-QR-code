@@ -23,6 +23,7 @@ body {
 .container {
   max-width: 1000px;
   margin: 50px auto;
+  margin-bottom: 60px;
   padding: 0 20px;
   display: grid;
   grid-template-columns: 1fr 400px;
@@ -33,6 +34,7 @@ body {
   .container {
     grid-template-columns: 1fr;
     margin: 20px auto;
+    margin-bottom: 60px;
   }
 }
 
@@ -304,3 +306,24 @@ input[type="number"]:focus {
 #savePrefixBtn:hover {
   background: var(--primary-hover);
 }
+
+/* الفوتر الثابت  */
+.main-footer {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  background: var(--primary-color); /* اللون الأزرق الداكن */
+  color: #fff;
+  text-align: center;
+  padding: 12px 0;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+  font-size: 14px;
+  z-index: 990; /* لضمان ظهوره فوق العناصر الأخرى */
+}
+
+.main-footer strong {
+  font-weight: 700;
+  color: #ffcc80; /* لون مميز للاسم */
+}
+
+/* تعديل هام: إضافة هامش سفلي للـ body لتجنب اختفاء المحتوى تحت الفوتر */

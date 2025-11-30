@@ -151,7 +151,7 @@ function buildCode(includeAmount = true) {
   // 2. بناء كود USSD
   const ussd = includeAmount
     ? `${prefix}${phone}*${amount}#`
-    : `${prefix}${phone}#`;
+    : `${prefix}${phone}*`;
 
   const telUri = "tel:" + encodeURIComponent(ussd);
 
