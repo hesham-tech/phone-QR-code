@@ -2,6 +2,94 @@ document.addEventListener("DOMContentLoaded", () => {
   // =============================================
   // نظام التنبيهات المرئية للتتبع
   // =============================================
+  let debugDiv = document.getElementById("debugLog");
+
+  // إنشاء div للتتبع إذا لم يكن موجوداً
+  if (!debugDiv) {
+    debugDiv = document.createElement("div");
+    debugDiv.id = "debugLog";
+    debugDiv.style.cssText = `
+      position: fixed;
+      bottom: 10px;
+      left: 10px;
+      right: 10px;
+      background: rgba(0,0,0,0.9);
+      color: #0f0;
+      padding: 35px 10px 10px 10px;
+      border-radius: 8px;
+      font-family: monospace;
+      font-size: 11px;
+      max-height: 200px;
+      overflow-y: auto;
+      z-index: 99999;
+      direction: ltr;
+      text-align: left;
+    `;
+    document.body.appendChild(debugDiv);
+
+    // إنشاء زر النسخ
+    const copyBtn = document.createElement("button");
+    copyBtn.textContent = "📋 نسخ";
+    copyBtn.style.cssText = `
+      position: absolute;
+      top: 5px;
+      right: 5px;
+      background: #0f0;
+      color: #000;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: bold;
+      z-index: 100000;
+    `;
+
+    // وظيفة نسخ محتوى الـ Log
+    copyBtn.addEventListener("click", () => {
+      const logText = Array.from(debugDiv.querySelectorAll("div"))
+        .map((entry) => entry.textContent)
+        .join("\n");
+
+      navigator.clipboard
+        .writeText(logText)
+        .then(() => {
+          copyBtn.textContent = "✅ تم النسخ!";
+          copyBtn.style.background = "#0ff";
+          setTimeout(() => {
+            copyBtn.textContent = "📋 نسخ";
+            copyBtn.style.background = "#0f0";
+          }, 2000);
+        })
+        .catch((err) => {
+          console.error("فشل النسخ:", err);
+          copyBtn.textContent = "❌ فشل";
+          setTimeout(() => {
+            copyBtn.textContent = "📋 نسخ";
+          }, 2000);
+        });
+    });
+
+    debugDiv.appendChild(copyBtn);
+  }
+
+  function log(message, type = "info") {
+    const now = new Date().toLocaleTimeString();
+    const colors = {
+      info: "#0ff",
+      success: "#0f0",
+      error: "#f00",
+      warning: "#ff0",
+    };
+
+    const entry = document.createElement("div");
+    entry.style.color = colors[type] || "#0ff";
+    entry.textContent = `[${now}] ${message}`;
+    debugDiv.appendChild(entry);
+    debugDiv.scrollTop = debugDiv.scrollHeight;
+
+    console.log(message);
+  }
 
   // =============================================
   // 1. تعريف العناصر
@@ -25,11 +113,18 @@ document.addEventListener("DOMContentLoaded", () => {
     return;
   }
 
+  log("✅ جميع العناصر موجودة", "success");
+
   // =============================================
   // 2. التحقق من دعم Contact Picker
   // =============================================
   const isContactSupported =
     "contacts" in navigator && "select" in navigator.contacts;
+
+  log(
+    "📱 Contact Picker: " + (isContactSupported ? "مدعوم" : "غير مدعوم"),
+    isContactSupported ? "success" : "error"
+  );
 
   if (!isContactSupported) {
     // contactPickerBtn.disabled = true;
@@ -56,12 +151,15 @@ document.addEventListener("DOMContentLoaded", () => {
   // 4. دالة تعيين الرقم + استدعاء دوال script.js
   // =============================================
   function setPhoneNumber(number) {
+    log(`📞 تعيين الرقم: ${number}`, "info");
+
     // 1. تعيين الرقم في حقل الإدخال
     phoneInput.value = number;
 
     // 2. مسح QR (دالة من script.js)
     if (typeof clearQR === "function") {
       clearQR();
+      log("🧹 تم استدعاء clearQR", "success");
     } else {
       log("⚠️ دالة clearQR غير موجودة", "warning");
     }
@@ -69,6 +167,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // 3. حفظ الرقم في savedNumbers (دالة من script.js)
     if (typeof saveNumber === "function") {
       saveNumber(number);
+      log("💾 تم استدعاء saveNumber", "success");
     } else {
       log("⚠️ دالة saveNumber غير موجودة", "warning");
     }
@@ -76,6 +175,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // 4. تحديث قائمة savedNumbers (دالة من script.js)
     if (typeof loadSavedNumbers === "function") {
       loadSavedNumbers();
+      log("🔄 تم استدعاء loadSavedNumbers", "success");
     } else {
       log("⚠️ دالة loadSavedNumbers غير موجودة", "warning");
     }
