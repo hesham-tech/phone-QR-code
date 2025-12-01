@@ -110,8 +110,8 @@ input[type="number"]:focus {
   flex-grow: 1;
   /* تغيير الهوامش الداخلية والحدود المدورة لدمج الزر به */
   padding-left: 55px; /* ترك مسافة لظهور الزر */
-  border-top-left-radius: 0;
-  border-bottom-left-radius: 0;
+  /* border-top-left-radius: 0;
+  border-bottom-left-radius: 0; */
 }
 
 /* تنسيق زر أيقونة جهات الاتصال */
@@ -440,7 +440,7 @@ input[type="number"]:focus {
   position: absolute;
   top: 100%; /* وضع القائمة أسفل حقل الإدخال */
   right: 0;
-  width: 100%;
+  width: fit-content;
   max-height: 200px;
   overflow-y: auto;
   background: var(--card-background);
