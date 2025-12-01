@@ -21,6 +21,7 @@ const savePrefixBtn = document.getElementById("savePrefixBtn");
 
 const DEFAULT_PREFIX = "*9*7*";
 const PREFIX_STORAGE_KEY = "ussd_prefix";
+const SAVED_NUMBERS_KEY = "saved_numbers";
 
 /* ==========================
 1. وظائف الـ QR والتنظيف
@@ -88,26 +89,41 @@ settingsDialog.onclick = (e) => {
 3. وظائف LocalStorage للأرقام + القائمة المخصصة
 ========================== */
 
+let allSavedNumbers = []; // مصفوفة لتخزين كل الأرقام المحفوظة
+
 function hideSavedNumbersDropdown() {
   savedNumbersDropdown.classList.add("hidden");
 }
 
 function showSavedNumbersDropdown() {
-  if (savedNumbersList.children.length > 0) {
+  // إظهار فقط إذا كانت هناك عناصر مرئية في القائمة
+  const visibleItems = Array.from(savedNumbersList.children).some(
+    (li) => li.style.display !== "none"
+  );
+  if (visibleItems) {
     savedNumbersDropdown.classList.remove("hidden");
+  } else {
+    hideSavedNumbersDropdown();
   }
 }
 
-function loadSavedNumbers() {
-  let list = JSON.parse(localStorage.getItem("saved_numbers") || "[]");
-  savedNumbersList.innerHTML = ""; // مسح القائمة الحالية
+function loadSavedNumbers(initialLoad = false) {
+  // يتم تحميل كل الأرقام إلى allSavedNumbers
+  allSavedNumbers = JSON.parse(localStorage.getItem(SAVED_NUMBERS_KEY) || "[]");
 
-  if (list.length === 0) {
+  if (initialLoad && allSavedNumbers.length > 0 && phoneInput.value === "") {
+    // تعيين آخر رقم محفوظ في حقل الإدخال عند التحميل الأولي
+    phoneInput.value = allSavedNumbers[allSavedNumbers.length - 1];
+  }
+
+  // إعادة بناء عناصر الـ HTML للقائمة
+  savedNumbersList.innerHTML = "";
+  if (allSavedNumbers.length === 0) {
     hideSavedNumbersDropdown();
     return;
   }
 
-  list.forEach((num) => {
+  allSavedNumbers.forEach((num) => {
     let li = document.createElement("li");
     li.textContent = num;
     li.setAttribute("dir", "ltr"); // لإجبار اتجاه النص لليسار لليمين للأرقام
@@ -119,15 +135,13 @@ function loadSavedNumbers() {
     savedNumbersList.appendChild(li);
   });
 
-  // تعيين آخر رقم محفوظ في حقل الإدخال عند التحميل (سلوك الـ datalist القديم)
-  if (list.length > 0 && phoneInput.value === "") {
-    phoneInput.value = list[list.length - 1];
-  }
+  // بعد إعادة البناء، نقوم بتصفية القائمة بناءً على النص الحالي
+  filterSavedNumbers();
 }
 
 function saveNumber(num) {
-  let list = JSON.parse(localStorage.getItem("saved_numbers") || "[]");
-  // إزالة الرقم إذا كان موجودًا وإضافته كآخر عنصر (لجعل الأحدث يظهر أولًا/أخيراً)
+  let list = JSON.parse(localStorage.getItem(SAVED_NUMBERS_KEY) || "[]");
+  // إزالة الرقم إذا كان موجودًا وإضافته كآخر عنصر (لجعل الأحدث يظهر في القائمة)
   list = list.filter((n) => n !== num);
 
   if (list.length >= 10) {
@@ -136,11 +150,46 @@ function saveNumber(num) {
   }
 
   list.push(num);
-  localStorage.setItem("saved_numbers", JSON.stringify(list));
+  localStorage.setItem(SAVED_NUMBERS_KEY, JSON.stringify(list));
 }
 
-// إضافة منطق إظهار القائمة عند التركيز على حقل الهاتف
-phoneInput.addEventListener("focus", showSavedNumbersDropdown);
+/**
+ * دالة البحث والتصفية الأساسية
+ */
+function filterSavedNumbers() {
+  const searchTerm = phoneInput.value.trim();
+  const listItems = savedNumbersList.children;
+  let matchesFound = false;
+
+  for (let i = 0; i < listItems.length; i++) {
+    const listItem = listItems[i];
+    const numberText = listItem.textContent;
+
+    // البحث عن تطابق الرقم المُدخل مع بداية أي رقم محفوظ
+    if (searchTerm === "" || numberText.startsWith(searchTerm)) {
+      listItem.style.display = ""; // إظهار
+      matchesFound = true;
+    } else {
+      listItem.style.display = "none"; // إخفاء
+    }
+  }
+
+  // التحكم في إظهار وإخفاء القائمة المنسدلة بناءً على نتائج البحث
+  if (searchTerm.length > 0 && matchesFound) {
+    showSavedNumbersDropdown();
+  } else {
+    hideSavedNumbersDropdown();
+  }
+}
+
+// إضافة منطق إظهار وتصفية القائمة عند التركيز أو الكتابة
+phoneInput.addEventListener("focus", () => {
+  loadSavedNumbers(); // تأكد من تحميل الأرقام قبل التركيز
+  filterSavedNumbers();
+});
+
+// الحدث الجديد لتصفية القائمة أثناء الكتابة
+phoneInput.addEventListener("input", filterSavedNumbers);
 
 // إخفاء القائمة عند النقر خارجها
 document.addEventListener("click", (e) => {
@@ -156,6 +205,7 @@ document.addEventListener("click", (e) => {
 ========================== */
 
 function validatePhone(num) {
+  // للتأكد من أن الرقم يحتوي على أرقام فقط وطول مناسب (8-15 رقم)
   return /^[0-9]{8,15}$/.test(num);
 }
 
@@ -236,7 +286,7 @@ copyButton.onclick = () => {
 
 // وظيفة التحميل عند بدء التشغيل
 window.onload = () => {
-  loadSavedNumbers();
+  loadSavedNumbers(true); // تمرير true للإشارة إلى التحميل الأولي
   loadPrefix(); // تحميل وعرض رمز الكود عند بدء التشغيل
 };
 
