@@ -201,12 +201,59 @@ document.addEventListener("click", (e) => {
 });
 
 /* ==========================
-4. وظائف التوليد الأساسية
+4. وظائف التوليد الأساسية + التحقق الموحد
 ========================== */
 
+/**
+ * دالة التحقق الصامتة: تفحص الرقم وتُرجع مصفوفة بالأخطاء.
+ * هذه الدالة موحدة ويتم استخدامها من contact-picker.js
+ * @param {string} num - الرقم المراد التحقق منه.
+ * @returns {string[]} - مصفوفة رسائل الأخطاء (فارغة إذا كان صالحاً).
+ */
+function getPhoneValidationErrors(num) {
+  let errors = [];
+
+  // 1. التحقق من الطول: يجب أن يكون 11 رقمًا
+  if (num.length !== 11) {
+    errors.push(
+      `- يجب أن يكون طول الرقم 11 رقمًا. (الرقم الحالي: ${num.length} رقم)`
+    );
+  }
+
+  // 2. التحقق من البداية: يجب أن يبدأ بـ "01"
+  if (!num.startsWith("01")) {
+    errors.push(
+      `- يجب أن يبدأ الرقم بالرمز '01'. (الرقم الحالي يبدأ بـ '${num.substring(
+        0,
+        2
+      )}')`
+    );
+  }
+
+  // 3. التحقق من الأرقام فقط
+  if (!/^\d+$/.test(num)) {
+    errors.push("- يجب أن يحتوي الرقم على أرقام فقط.");
+  }
+
+  return errors;
+}
+
+/**
+ * دالة التحقق العامة: تعرض التنبيهات وتُرجع boolean
+ * يتم استدعاؤها قبل توليد QR
+ * @param {string} num - الرقم المراد التحقق منه.
+ * @returns {boolean} - true إذا كان الرقم صحيحًا، false وإلا.
+ */
 function validatePhone(num) {
-  // للتأكد من أن الرقم يحتوي على أرقام فقط وطول مناسب (8-15 رقم)
-  return /^[0-9]{8,15}$/.test(num);
+  const errors = getPhoneValidationErrors(num);
+
+  if (errors.length > 0) {
+    // عرض رسالة خطأ مفصلة إذا وُجدت أخطاء
+    alert("❌ فشل التحقق من الرقم المدخل:\n" + errors.join("\n"));
+    return false;
+  }
+
+  return true;
 }
 
 function generateQR(text) {
@@ -235,7 +282,7 @@ function buildCode(includeAmount = true) {
 
   // 1. التحقق من صحة الإدخال
   if (!validatePhone(phone)) {
-    alert("❌ الرجاء إدخال رقم مستفيد صحيح (8-15 رقم).");
+    // استخدام الدالة التي تعرض التنبيه
     return;
   }
 

@@ -35,19 +35,27 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // =============================================
-  // 3. دالة تنظيف رقم الهاتف
+  // 3. دالة تنظيف رقم الهاتف (تنظيف وإصلاح التنسيق)
   // =============================================
   function cleanPhoneNumber(num) {
     if (!num) return "";
 
-    // إزالة المسافات وعلامة +
-    let cleaned = num.replace(/\s+/g, "").replace(/^\+/, "");
+    // 1. إزالة أي شيء غير الأرقام
+    let cleaned = num.replace(/\D/g, "");
 
-    // إزالة البادئات الدولية
-    cleaned = cleaned.replace(
-      /^(20|966|971|962|965|968|973|974|212|218|249|963|90|1|44|33|49|380|39|34|351|355|357|358|359|36|420|421|43|45|46|47|48|52|53|54|55|56|57|58|60|61|62|63|64|65|66|67|68)/,
-      ""
-    );
+    // 2. إزالة البادئات الدولية الشائعة إذا كان الرقم طويلاً جداً
+    if (cleaned.length > 11) {
+      cleaned = cleaned.replace(
+        /^(20|966|971|962|965|968|973|974|212|218|249|963|90|1|44|33|49|380|39|34|351|355|357|358|359|36|420|421|43|45|46|47|48|52|53|54|55|56|57|58|60|61|62|63|64|65|66|67|68)/,
+        ""
+      );
+    }
+
+    // 3. المنطق الجديد للإصلاح: إذا كان الرقم 10 أرقام ويبدأ بـ '1' (مثل 1234567890)،
+    // نفترض أنه ينقصه الصفر الافتتاحي (01...) ونضيفه.
+    if (cleaned.length === 10 && cleaned.startsWith("1")) {
+      cleaned = "0" + cleaned;
+    }
 
     return cleaned;
   }
@@ -70,7 +78,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // 4. تحديث قائمة savedNumbers (دالة من script.js)
-    // هذا الاستدعاء مهم ليقوم بتحديث القائمة المخصصة الجديدة
     if (typeof loadSavedNumbers === "function") {
       loadSavedNumbers();
     }
@@ -116,6 +123,15 @@ document.addEventListener("DOMContentLoaded", () => {
   // =============================================
   async function pickContact() {
     try {
+      // التأكد من وجود دالة التحقق قبل المتابعة
+      // هذه الدالة موجودة في script.js
+      if (typeof getPhoneValidationErrors !== "function") {
+        alert(
+          "خطأ: دالة التحقق (getPhoneValidationErrors) غير متوفرة. تأكد من تحميل script.js أولاً."
+        );
+        return;
+      }
+
       const properties = ["tel", "name"];
       const options = { multiple: false };
 
@@ -132,22 +148,30 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
+      // 1. تنظيف الأرقام
       const cleanedNumbers = contact.tel
         .map(cleanPhoneNumber)
         .filter((n) => n.length > 0);
 
-      if (cleanedNumbers.length === 0) {
-        alert("لا توجد أرقام صالحة في جهة الاتصال");
+      // 2. تصفية الأرقام للتأكد من أنها تتبع قواعد التحقق الموحدة (11 رقمًا، تبدأ بـ 01)
+      const validNumbers = cleanedNumbers.filter(
+        (n) => getPhoneValidationErrors(n).length === 0
+      );
+
+      if (validNumbers.length === 0) {
+        alert(
+          "بعد التنظيف، لا توجد أرقام صالحة (11 رقم وتبدأ بـ 01) في جهة الاتصال."
+        );
         return;
       }
 
       const name =
         contact.name && contact.name.length > 0 ? contact.name[0] : "";
 
-      if (cleanedNumbers.length === 1) {
-        setPhoneNumber(cleanedNumbers[0]);
+      if (validNumbers.length === 1) {
+        setPhoneNumber(validNumbers[0]);
       } else {
-        showDialog(cleanedNumbers, name);
+        showDialog(validNumbers, name);
       }
     } catch (error) {
       if (error.name !== "AbortError") {
