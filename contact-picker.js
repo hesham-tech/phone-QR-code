@@ -1,206 +1,277 @@
-document.addEventListener("DOMContentLoaded", () => {
-  // =============================================
-  // 1. تعريف العناصر
-  // =============================================
-  const contactPickerBtn = document.getElementById("contactPickerBtn");
-  const phoneInput = document.getElementById("phone");
-  const numbersDialog = document.getElementById("numbersDialog");
-  const contactNumbersList = document.getElementById("contactNumbersList");
-  const dialogTitle = document.getElementById("dialogTitle");
-  const dialogCancelBtn = document.getElementById("dialogCancelBtn");
+// ==========================================
+// Contact Picker Module
+// ==========================================
 
-  // التحقق من وجود العناصر
-  if (
-    !contactPickerBtn ||
-    !phoneInput ||
-    !numbersDialog ||
-    !contactNumbersList ||
-    !dialogTitle ||
-    !dialogCancelBtn
-  ) {
-    console.error("❌ بعض عناصر Contact Picker غير موجودة في HTML");
-    return;
+document.addEventListener("DOMContentLoaded", () => {
+  // ==========================================
+  // DOM Elements
+  // ==========================================
+  const elements = {
+    contactPickerBtn: document.getElementById("contactPickerBtn"),
+    phoneInput: document.getElementById("phone"),
+    numbersDialog: document.getElementById("numbersDialog"),
+    contactNumbersList: document.getElementById("contactNumbersList"),
+    dialogTitle: document.getElementById("dialogTitle"),
+    dialogCancelBtn: document.getElementById("dialogCancelBtn"),
+  };
+
+  // ==========================================
+  // Validation
+  // ==========================================
+  function validateElements() {
+    const missing = Object.entries(elements)
+      .filter(([, element]) => !element)
+      .map(([name]) => name);
+
+    if (missing.length > 0) {
+      console.error("❌ Missing Contact Picker elements:", missing);
+      return false;
+    }
+
+    return true;
   }
 
-  // =============================================
-  // 2. التحقق من دعم Contact Picker API
-  // =============================================
+  if (!validateElements()) return;
+
+  // ==========================================
+  // Check Contact Picker Support
+  // ==========================================
   const isContactSupported =
     "contacts" in navigator && "select" in navigator.contacts;
 
   if (!isContactSupported) {
-    contactPickerBtn.style.display = "none";
-    console.warn("⚠️ جهازك لا يدعم Contact Picker API");
+    elements.contactPickerBtn.style.display = "none";
+    console.warn("⚠️ Contact Picker API not supported");
     return;
   }
 
-  // =============================================
-  // 3. دالة تنظيف رقم الهاتف (تنظيف وإصلاح التنسيق)
-  // =============================================
-  function cleanPhoneNumber(num) {
-    if (!num) return "";
+  console.log("✅ Contact Picker API supported");
 
-    // 1. إزالة أي شيء غير الأرقام
-    let cleaned = num.replace(/\D/g, "");
+  // ==========================================
+  // Phone Number Cleaner
+  // ==========================================
+  const PhoneCleaner = {
+    // International prefixes to remove
+    PREFIXES: [
+      "20", // Egypt
+      "966", // Saudi Arabia
+      "971", // UAE
+      "962", // Jordan
+      "965", // Kuwait
+      "968", // Oman
+      "973", // Bahrain
+      "974", // Qatar
+      "212", // Morocco
+      "218", // Libya
+      "249", // Sudan
+      "963", // Syria
+      "90", // Turkey
+      "1", // USA/Canada
+      "44", // UK
+      "33", // France
+      "49", // Germany
+      "380", // Ukraine
+      "39", // Italy
+      "34", // Spain
+      "351", // Portugal
+      "355", // Albania
+      "357", // Cyprus
+      "358", // Finland
+      "359", // Bulgaria
+      "36", // Hungary
+      "420", // Czech Republic
+      "421", // Slovakia
+      "43", // Austria
+      "45", // Denmark
+      "46", // Sweden
+      "47", // Norway
+      "48", // Poland
+      "52", // Mexico
+      "53", // Cuba
+      "54", // Argentina
+      "55", // Brazil
+      "56", // Chile
+      "57", // Colombia
+      "58", // Venezuela
+      "60", // Malaysia
+      "61", // Australia
+      "62", // Indonesia
+      "63", // Philippines
+      "64", // New Zealand
+      "65", // Singapore
+      "66", // Thailand
+      "67", // Kazakhstan
+      "68", // East Timor
+    ],
 
-    // 2. إزالة البادئات الدولية الشائعة إذا كان الرقم طويلاً جداً
-    if (cleaned.length > 11) {
-      cleaned = cleaned.replace(
-        /^(20|966|971|962|965|968|973|974|212|218|249|963|90|1|44|33|49|380|39|34|351|355|357|358|359|36|420|421|43|45|46|47|48|52|53|54|55|56|57|58|60|61|62|63|64|65|66|67|68)/,
-        ""
-      );
-    }
+    clean(number) {
+      if (!number) return "";
 
-    // 3. المنطق الجديد للإصلاح: إذا كان الرقم 10 أرقام ويبدأ بـ '1' (مثل 1234567890)،
-    // نفترض أنه ينقصه الصفر الافتتاحي (01...) ونضيفه.
-    if (cleaned.length === 10 && cleaned.startsWith("1")) {
-      cleaned = "0" + cleaned;
-    }
+      // Remove all non-digits
+      let cleaned = number.replace(/\D/g, "");
 
-    return cleaned;
-  }
+      // Remove international prefixes if number is too long
+      if (cleaned.length > 11) {
+        const prefixPattern = `^(${this.PREFIXES.join("|")})`;
+        cleaned = cleaned.replace(new RegExp(prefixPattern), "");
+      }
 
-  // =============================================
-  // 4. دالة تعيين الرقم + استدعاء دوال script.js
-  // =============================================
-  function setPhoneNumber(number) {
-    // 1. تعيين الرقم في حقل الإدخال
-    phoneInput.value = number;
+      // Fix 10-digit numbers starting with '1' (add leading zero)
+      if (cleaned.length === 10 && cleaned.startsWith("1")) {
+        cleaned = "0" + cleaned;
+      }
 
-    // 2. مسح QR (دالة من script.js)
-    if (typeof clearQR === "function") {
-      clearQR();
-    }
+      return cleaned;
+    },
+  };
 
-    // 3. حفظ الرقم في savedNumbers (دالة من script.js)
-    if (typeof saveNumber === "function") {
-      saveNumber(number);
-    }
+  // ==========================================
+  // Dialog Manager
+  // ==========================================
+  const DialogManager = {
+    show(numbers, name = "") {
+      elements.dialogTitle.innerHTML = `
+                <i class="fas fa-phone"></i>
+                ${name ? `اختر رقم (${name})` : "اختر رقم الهاتف"}
+            `;
 
-    // 4. تحديث قائمة savedNumbers (دالة من script.js)
-    if (typeof loadSavedNumbers === "function") {
-      loadSavedNumbers();
-    }
-  }
+      this.renderNumbers(numbers);
+      elements.numbersDialog.classList.remove("hidden");
+    },
 
-  // =============================================
-  // 5. دوال Dialog
-  // =============================================
-  function closeDialog() {
-    numbersDialog.classList.add("hidden");
-    numbersDialog.style.display = "none";
-  }
+    close() {
+      elements.numbersDialog.classList.add("hidden");
+    },
 
-  function showDialog(numbers, name) {
-    dialogTitle.textContent = name
-      ? `اختر رقم الهاتف (${name})`
-      : "اختر رقم الهاتف";
+    renderNumbers(numbers) {
+      elements.contactNumbersList.innerHTML = "";
 
-    contactNumbersList.innerHTML = "";
+      numbers.forEach((number) => {
+        const li = document.createElement("li");
+        li.textContent = number;
+        li.setAttribute("dir", "ltr");
 
-    numbers.forEach((num) => {
-      const li = document.createElement("li");
-      li.textContent = num;
-      li.style.cursor = "pointer";
-      li.style.padding = "12px";
-      li.style.borderBottom = "1px solid #eee";
-      li.setAttribute("dir", "ltr"); // إجبار اتجاه الأرقام
+        li.addEventListener("click", () => {
+          this.selectNumber(number);
+        });
 
-      li.addEventListener("click", () => {
-        setPhoneNumber(num);
-        closeDialog();
+        elements.contactNumbersList.appendChild(li);
       });
+    },
 
-      contactNumbersList.appendChild(li);
-    });
+    selectNumber(number) {
+      elements.phoneInput.value = number;
 
-    numbersDialog.classList.remove("hidden");
-    numbersDialog.style.display = "flex";
-  }
-
-  // =============================================
-  // 6. دالة اختيار جهة الاتصال
-  // =============================================
-  async function pickContact() {
-    try {
-      // التأكد من وجود دالة التحقق قبل المتابعة
-      // هذه الدالة موجودة في script.js
-      if (typeof getPhoneValidationErrors !== "function") {
-        alert(
-          "خطأ: دالة التحقق (getPhoneValidationErrors) غير متوفرة. تأكد من تحميل script.js أولاً."
-        );
-        return;
+      // Call external functions from script.js
+      if (typeof window.clearQR === "function") {
+        window.clearQR();
       }
 
-      const properties = ["tel", "name"];
-      const options = { multiple: false };
-
-      const contacts = await navigator.contacts.select(properties, options);
-
-      if (!contacts || contacts.length === 0) {
-        return;
+      if (typeof window.saveNumber === "function") {
+        window.saveNumber(number);
       }
 
-      const contact = contacts[0];
-
-      if (!contact.tel || contact.tel.length === 0) {
-        alert("جهة الاتصال لا تحتوي على أرقام");
-        return;
+      if (typeof window.loadSavedNumbers === "function") {
+        window.loadSavedNumbers();
       }
 
-      // 1. تنظيف الأرقام
-      const cleanedNumbers = contact.tel
-        .map(cleanPhoneNumber)
-        .filter((n) => n.length > 0);
+      this.close();
+    },
+  };
 
-      // 2. تصفية الأرقام للتأكد من أنها تتبع قواعد التحقق الموحدة (11 رقمًا، تبدأ بـ 01)
-      const validNumbers = cleanedNumbers.filter(
-        (n) => getPhoneValidationErrors(n).length === 0
-      );
+  // ==========================================
+  // Contact Picker
+  // ==========================================
+  const ContactPicker = {
+    async pick() {
+      try {
+        // Verify validation function exists
+        if (typeof window.getPhoneValidationErrors !== "function") {
+          this.showError("دالة التحقق غير متوفرة. تأكد من تحميل script.js");
+          return;
+        }
 
-      if (validNumbers.length === 0) {
-        alert(
-          "بعد التنظيف، لا توجد أرقام صالحة (11 رقم وتبدأ بـ 01) في جهة الاتصال."
-        );
-        return;
+        // Request contact
+        const contacts = await navigator.contacts.select(["tel", "name"], {
+          multiple: false,
+        });
+
+        if (!contacts || contacts.length === 0) {
+          return;
+        }
+
+        const contact = contacts[0];
+
+        // Check if contact has phone numbers
+        if (!contact.tel || contact.tel.length === 0) {
+          this.showError("جهة الاتصال لا تحتوي على أرقام هاتف");
+          return;
+        }
+
+        // Clean and validate numbers
+        const cleanedNumbers = contact.tel
+          .map((num) => PhoneCleaner.clean(num))
+          .filter((num) => num.length > 0);
+
+        const validNumbers = cleanedNumbers.filter((num) => {
+          const errors = window.getPhoneValidationErrors(num);
+          return errors.length === 0;
+        });
+
+        if (validNumbers.length === 0) {
+          this.showError("لا توجد أرقام صالحة (11 رقم تبدأ بـ 01)");
+          return;
+        }
+
+        // Get contact name
+        const name =
+          contact.name && contact.name.length > 0 ? contact.name[0] : "";
+
+        // Show dialog or select directly
+        if (validNumbers.length === 1) {
+          DialogManager.selectNumber(validNumbers[0]);
+        } else {
+          DialogManager.show(validNumbers, name);
+        }
+      } catch (error) {
+        if (error.name !== "AbortError") {
+          console.error("Contact Picker error:", error);
+          this.showError("حدث خطأ أثناء اختيار جهة الاتصال");
+        }
       }
+    },
 
-      const name =
-        contact.name && contact.name.length > 0 ? contact.name[0] : "";
+    showError(message) {
+      alert(`⚠️ ${message}`);
+    },
+  };
 
-      if (validNumbers.length === 1) {
-        setPhoneNumber(validNumbers[0]);
-      } else {
-        showDialog(validNumbers, name);
-      }
-    } catch (error) {
-      if (error.name !== "AbortError") {
-        console.error("خطأ في Contact Picker:", error);
-      }
-    }
-  }
-
-  // =============================================
-  // 7. ربط الأحداث
-  // =============================================
-  contactPickerBtn.addEventListener("click", (e) => {
+  // ==========================================
+  // Event Listeners
+  // ==========================================
+  elements.contactPickerBtn.addEventListener("click", (e) => {
     e.preventDefault();
-    pickContact();
+    ContactPicker.pick();
   });
 
-  dialogCancelBtn.addEventListener("click", () => {
-    closeDialog();
+  elements.dialogCancelBtn.addEventListener("click", () => {
+    DialogManager.close();
   });
 
-  numbersDialog.addEventListener("click", (e) => {
-    if (e.target === numbersDialog) {
-      closeDialog();
+  elements.numbersDialog.addEventListener("click", (e) => {
+    if (e.target === elements.numbersDialog) {
+      DialogManager.close();
     }
   });
 
   document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && !numbersDialog.classList.contains("hidden")) {
-      closeDialog();
+    if (
+      e.key === "Escape" &&
+      !elements.numbersDialog.classList.contains("hidden")
+    ) {
+      DialogManager.close();
     }
   });
+
+  console.log("✅ Contact Picker initialized");
 });

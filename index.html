@@ -1,123 +1,248 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>مولّد QR لكود تحويل الأموال (USSD) - تصميم احترافي</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>مولّد QR لتحويل الأموال - Vodafone Cash</title>
 
+    <!-- Fonts -->
     <link
-      href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
+
+    <!-- Icons -->
     <link
       rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
     />
+
+    <!-- QR Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
+    <!-- Stylesheet -->
     <link rel="stylesheet" href="style.css" />
   </head>
-
   <body>
-    <div id="settingsDialog" class="dialog-backdrop">
-      <div class="dialog-content">
-        <h3>⚙️ إعدادات كود (USSD)</h3>
-        <div class="input-group">
-          <label for="prefixInput">رمز الكود الافتراضي</label>
-          <input
-            id="prefixInput"
-            type="text"
-            placeholder="مثال: *9*7*"
-            value=""
-          />
+    <!-- Header -->
+    <header class="app-header">
+      <div class="header-container">
+        <div class="logo-section">
+          <div class="logo-icon">
+            <i class="fas fa-qrcode"></i>
+          </div>
+          <h1>مولّد كود QR للتحويل</h1>
         </div>
-        <button id="savePrefixBtn">💾 حفظ الإعدادات</button>
-      </div>
-    </div>
-
-    <div class="container">
-      <div class="input-card card">
-        <button id="settingsBtn" title="إعدادات كود USSD">
+        <button id="settingsBtn" class="settings-btn" title="الإعدادات">
           <i class="fas fa-cog"></i>
         </button>
-
-        <div class="header">
-          <h2>✨ مولّد كود QR للتحويل (USSD)</h2>
-        </div>
-
-        <div class="form-grid">
-          <div class="input-group">
-            <label for="phone">رقم المستفيد</label>
-
-            <div class="input-with-button">
-              <input
-                id="phone"
-                type="text"
-                placeholder="الرقم المحول اليه مثال : 01012345678 "
-                inputmode="numeric"
-                autocomplete="off"
-              />
-
-              <button id="contactPickerBtn" title="اختيار من جهات الاتصال">
-                <i class="fas fa-user-circle"></i>
-              </button>
-            </div>
-
-            <div
-              id="savedNumbersDropdown"
-              class="saved-numbers-dropdown hidden"
-            >
-              <ul id="savedNumbersList" class="saved-numbers-list"></ul>
-            </div>
-          </div>
-
-          <div class="input-group">
-            <label for="amount">المبلغ (اختياري)</label>
-            <input id="amount" type="number" placeholder="مثال: 500" min="1" />
-          </div>
-
-          <div class="input-group">
-            <input id="displayPrefix" type="hidden" readonly disabled />
-          </div>
-        </div>
-
-        <div class="actions">
-          <button class="btn btn-primary" id="gen">
-            ✅ إنشاء QR (بالرقم والمبلغ)
-          </button>
-          <button class="btn btn-secondary" id="genFixed">
-            🔗 إنشاء QR (بالرقم فقط - بدون مبلغ)
-          </button>
-        </div>
       </div>
+    </header>
 
-      <div class="qr-card card qr-section">
-        <h3>كود الاستجابة السريعة (QR)</h3>
-        <div id="qrBox" class="qr-box">
-          <span class="qr-placeholder">سيظهر الـ QR هنا بعد الإدخال</span>
+    <!-- Main Content -->
+    <main class="main-content">
+      <div class="content-wrapper">
+        <!-- Input Section -->
+        <section class="input-section">
+          <div class="section-card">
+            <div class="card-header">
+              <h2>
+                <i class="fas fa-edit"></i>
+                بيانات التحويل
+              </h2>
+            </div>
+
+            <div class="card-body">
+              <!-- Phone Input -->
+              <div class="form-group">
+                <label for="phone" class="form-label">
+                  <i class="fas fa-phone"></i>
+                  رقم المستفيد
+                </label>
+                <div class="input-wrapper">
+                  <input
+                    type="text"
+                    id="phone"
+                    class="form-input"
+                    placeholder="مثال: 01012345678"
+                    inputmode="numeric"
+                    autocomplete="off"
+                    maxlength="11"
+                  />
+                  <button
+                    id="contactPickerBtn"
+                    class="input-btn"
+                    title="اختيار من جهات الاتصال"
+                  >
+                    <i class="fas fa-address-book"></i>
+                  </button>
+                </div>
+
+                <!-- Saved Numbers Dropdown -->
+                <div id="savedNumbersDropdown" class="dropdown-menu hidden">
+                  <div class="dropdown-header">
+                    <span>الأرقام المحفوظة</span>
+                  </div>
+                  <ul id="savedNumbersList" class="dropdown-list"></ul>
+                </div>
+              </div>
+
+              <!-- Amount Input -->
+              <div class="form-group">
+                <label for="amount" class="form-label">
+                  <i class="fas fa-money-bill-wave"></i>
+                  المبلغ (اختياري)
+                </label>
+                <div class="input-wrapper">
+                  <input
+                    type="number"
+                    id="amount"
+                    class="form-input"
+                    placeholder="مثال: 500"
+                    min="1"
+                  />
+                  <span class="input-suffix">جنيه</span>
+                </div>
+              </div>
+
+              <!-- Action Buttons -->
+              <div class="action-buttons">
+                <button id="gen" class="btn btn-primary">
+                  <i class="fas fa-qrcode"></i>
+                  <span>إنشاء QR كامل (رقم + مبلغ)</span>
+                </button>
+                <button id="genFixed" class="btn btn-secondary">
+                  <i class="fas fa-link"></i>
+                  <span>إنشاء QR (رقم فقط)</span>
+                </button>
+              </div>
+
+              <!-- Code Display -->
+              <div id="codeInfo" class="code-display hidden">
+                <div class="code-header">
+                  <span class="code-label">كود USSD</span>
+                  <button id="copyBtn" class="btn-icon" title="نسخ الكود">
+                    <i class="fas fa-copy"></i>
+                  </button>
+                </div>
+                <div class="code-value" id="ussdCode" dir="ltr"></div>
+                <button id="callBtn" class="btn btn-call">
+                  <i class="fas fa-phone-alt"></i>
+                  <span>اتصال مباشر للتحويل</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- QR Section -->
+        <section class="qr-section">
+          <div class="section-card qr-card">
+            <div class="card-header">
+              <h2>
+                <i class="fas fa-qrcode"></i>
+                كود الاستجابة السريعة
+              </h2>
+            </div>
+
+            <div class="card-body">
+              <div id="qrBox" class="qr-container">
+                <div class="qr-placeholder">
+                  <i class="fas fa-qrcode"></i>
+                  <p>سيظهر كود QR هنا بعد إدخال البيانات</p>
+                </div>
+              </div>
+
+              <!-- Bottom Code Display -->
+              <div id="ussdCodeBottomContainer" class="bottom-code hidden">
+                <div class="bottom-code-label">الكود النصي</div>
+                <div
+                  id="ussdCodeBottom"
+                  class="bottom-code-value"
+                  dir="ltr"
+                ></div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <!-- Settings Dialog -->
+    <div id="settingsDialog" class="dialog-overlay hidden">
+      <div class="dialog-container">
+        <div class="dialog-header">
+          <h3>
+            <i class="fas fa-cog"></i>
+            إعدادات كود USSD
+          </h3>
+          <button
+            class="dialog-close"
+            onclick="document.getElementById('settingsDialog').classList.add('hidden')"
+          >
+            <i class="fas fa-times"></i>
+          </button>
         </div>
-
-        <div id="codeInfo" class="code-info">
-          <p>الكود الناتج:</p>
-          <span dir="ltr" lang="en" id="ussdCode"></span>
-          <button id="copyBtn">📋 نسخ الكود</button>
+        <div class="dialog-body">
+          <div class="form-group">
+            <label for="prefixInput" class="form-label"
+              >رمز الكود الافتراضي</label
+            >
+            <input
+              type="text"
+              id="prefixInput"
+              class="form-input"
+              placeholder="مثال: *9*7*"
+            />
+            <small class="form-hint"
+              >الرمز الحالي: <strong>*9*7*</strong> (Vodafone Cash)</small
+            >
+          </div>
+        </div>
+        <div class="dialog-footer">
+          <button id="savePrefixBtn" class="btn btn-primary">
+            <i class="fas fa-save"></i>
+            حفظ الإعدادات
+          </button>
         </div>
       </div>
     </div>
-    <div id="numbersDialog" class="dialog-backdrop hidden">
-      <div class="dialog-content">
-        <h3 id="dialogTitle">اختر رقم الهاتف</h3>
-        <ul id="contactNumbersList" class="contact-list"></ul>
-        <div class="dialog-actions">
+
+    <!-- Contact Numbers Dialog -->
+    <div id="numbersDialog" class="dialog-overlay hidden">
+      <div class="dialog-container">
+        <div class="dialog-header">
+          <h3 id="dialogTitle">
+            <i class="fas fa-phone"></i>
+            اختر رقم الهاتف
+          </h3>
+          <button
+            class="dialog-close"
+            onclick="document.getElementById('numbersDialog').classList.add('hidden')"
+          >
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="dialog-body">
+          <ul id="contactNumbersList" class="contact-list"></ul>
+        </div>
+        <div class="dialog-footer">
           <button id="dialogCancelBtn" class="btn btn-secondary">إلغاء</button>
         </div>
       </div>
     </div>
-    <footer class="main-footer">
+
+    <!-- Footer -->
+    <footer class="app-footer">
       <div class="footer-content">
-        تم التطوير بواسطة : <strong>hesham mohamed</strong>
+        <p>تم التطوير بواسطة <strong>Hesham Mohamed</strong></p>
+        <div class="footer-links">
+          <span>© 2024 جميع الحقوق محفوظة</span>
+        </div>
       </div>
     </footer>
+
+    <!-- Scripts -->
     <script src="script.js"></script>
     <script src="contact-picker.js"></script>
   </body>

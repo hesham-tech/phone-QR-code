@@ -1,346 +1,425 @@
-// العناصر الرئيسية
-const phoneInput = document.getElementById("phone");
-const amountInput = document.getElementById("amount");
-const displayPrefixInput = document.getElementById("displayPrefix"); // الحقل الجديد لعرض الـ Prefix
-// تم استبدال savedNumbersDatalist بالقوائم المخصصة
-const savedNumbersDropdown = document.getElementById("savedNumbersDropdown");
-const savedNumbersList = document.getElementById("savedNumbersList");
-
-const qrBox = document.getElementById("qrBox");
-const codeInfo = document.getElementById("codeInfo");
-const ussdCodeSpan = document.getElementById("ussdCode");
-const copyButton = document.getElementById("copyBtn");
-const genButton = document.getElementById("gen");
-const genFixedButton = document.getElementById("genFixed");
-
-// عناصر الإعدادات (الـ Dialog)
-const settingsDialog = document.getElementById("settingsDialog");
-const settingsBtn = document.getElementById("settingsBtn");
-const prefixInput = document.getElementById("prefixInput"); // حقل الإدخال داخل الـ Dialog
-const savePrefixBtn = document.getElementById("savePrefixBtn");
-
-const DEFAULT_PREFIX = "*9*7*";
-const PREFIX_STORAGE_KEY = "ussd_prefix";
-const SAVED_NUMBERS_KEY = "saved_numbers";
-
-/* ==========================
-1. وظائف الـ QR والتنظيف
-========================== */
-
-function clearQR() {
-  // حذف محتوى الـ QR وإعادة العرض الافتراضي
-  qrBox.innerHTML =
-    '<span class="qr-placeholder">سيظهر الـ QR هنا بعد الإدخال</span>';
-  codeInfo.style.display = "none";
-  ussdCodeSpan.innerText = "";
-}
-
-function addChangeListener(element) {
-  // مسح الـ QR عند أي تغيير في حقول الإدخال
-  element.addEventListener("input", clearQR);
-}
-
-addChangeListener(phoneInput);
-addChangeListener(amountInput);
-
-/* ==========================
-2. وظائف الإعدادات
-========================== */
-
-function loadPrefix() {
-  // تحميل رمز الكود من LocalStorage، أو استخدام القيمة الافتراضية
-  const prefix = localStorage.getItem(PREFIX_STORAGE_KEY) || DEFAULT_PREFIX;
-  displayPrefixInput.value = prefix; // تحديث حقل العرض (المخفي)
-  return prefix;
-}
-
-function savePrefix() {
-  const newPrefix = prefixInput.value.trim();
-  if (newPrefix === "") {
-    alert("الرجاء إدخال رمز كود USSD صالح.");
-    return;
-  }
-
-  localStorage.setItem(PREFIX_STORAGE_KEY, newPrefix);
-  loadPrefix(); // تحديث القيمة المعروضة
-  clearQR(); // مسح الـ QR عند تغيير الرمز
-  settingsDialog.style.display = "none"; // إغلاق الدايلوج
-  alert("تم حفظ رمز الكود بنجاح!");
-}
-
-// فتح الـ Dialog
-settingsBtn.onclick = () => {
-  // تحميل القيمة الحالية في حقل الإدخال داخل الـ Dialog قبل الفتح
-  prefixInput.value = loadPrefix();
-  settingsDialog.style.display = "flex";
+// ==========================================
+// Constants & Configuration
+// ==========================================
+const CONFIG = {
+  DEFAULT_PREFIX: "*9*7*",
+  PREFIX_STORAGE_KEY: "ussd_prefix",
+  SAVED_NUMBERS_KEY: "saved_numbers",
+  MAX_SAVED_NUMBERS: 10,
+  PHONE_LENGTH: 11,
+  QR_SIZE: 300,
 };
 
-// إغلاق الـ Dialog عند الضغط على زر الحفظ
-savePrefixBtn.onclick = savePrefix;
-
-// إغلاق الـ Dialog عند الضغط خارج النافذة
-settingsDialog.onclick = (e) => {
-  if (e.target === settingsDialog) {
-    settingsDialog.style.display = "none";
-  }
+// ==========================================
+// DOM Elements
+// ==========================================
+const DOM = {
+  phoneInput: document.getElementById("phone"),
+  amountInput: document.getElementById("amount"),
+  savedNumbersDropdown: document.getElementById("savedNumbersDropdown"),
+  savedNumbersList: document.getElementById("savedNumbersList"),
+  qrBox: document.getElementById("qrBox"),
+  codeInfo: document.getElementById("codeInfo"),
+  ussdCodeSpan: document.getElementById("ussdCode"),
+  ussdCodeBottom: document.getElementById("ussdCodeBottom"),
+  ussdCodeBottomContainer: document.getElementById("ussdCodeBottomContainer"),
+  copyButton: document.getElementById("copyBtn"),
+  callButton: document.getElementById("callBtn"),
+  genButton: document.getElementById("gen"),
+  genFixedButton: document.getElementById("genFixed"),
+  settingsDialog: document.getElementById("settingsDialog"),
+  settingsBtn: document.getElementById("settingsBtn"),
+  prefixInput: document.getElementById("prefixInput"),
+  savePrefixBtn: document.getElementById("savePrefixBtn"),
 };
 
-/* ==========================
-3. وظائف LocalStorage للأرقام + القائمة المخصصة
-========================== */
+// ==========================================
+// Storage Manager
+// ==========================================
+const StorageManager = {
+  getPrefix() {
+    return (
+      localStorage.getItem(CONFIG.PREFIX_STORAGE_KEY) || CONFIG.DEFAULT_PREFIX
+    );
+  },
 
-let allSavedNumbers = []; // مصفوفة لتخزين كل الأرقام المحفوظة
+  setPrefix(prefix) {
+    localStorage.setItem(CONFIG.PREFIX_STORAGE_KEY, prefix);
+  },
 
-function hideSavedNumbersDropdown() {
-  savedNumbersDropdown.classList.add("hidden");
-}
+  getSavedNumbers() {
+    const data = localStorage.getItem(CONFIG.SAVED_NUMBERS_KEY);
+    return data ? JSON.parse(data) : [];
+  },
 
-function showSavedNumbersDropdown() {
-  // إظهار فقط إذا كانت هناك عناصر مرئية في القائمة
-  const visibleItems = Array.from(savedNumbersList.children).some(
-    (li) => li.style.display !== "none"
-  );
-  if (visibleItems) {
-    savedNumbersDropdown.classList.remove("hidden");
-  } else {
-    hideSavedNumbersDropdown();
-  }
-}
+  setSavedNumbers(numbers) {
+    localStorage.setItem(CONFIG.SAVED_NUMBERS_KEY, JSON.stringify(numbers));
+  },
 
-function loadSavedNumbers(initialLoad = false) {
-  // يتم تحميل كل الأرقام إلى allSavedNumbers
-  allSavedNumbers = JSON.parse(localStorage.getItem(SAVED_NUMBERS_KEY) || "[]");
+  addNumber(number) {
+    let numbers = this.getSavedNumbers();
+    numbers = numbers.filter((n) => n !== number);
 
-  if (initialLoad && allSavedNumbers.length > 0 && phoneInput.value === "") {
-    // تعيين آخر رقم محفوظ في حقل الإدخال عند التحميل الأولي
-    phoneInput.value = allSavedNumbers[allSavedNumbers.length - 1];
-  }
-
-  // إعادة بناء عناصر الـ HTML للقائمة
-  savedNumbersList.innerHTML = "";
-  if (allSavedNumbers.length === 0) {
-    hideSavedNumbersDropdown();
-    return;
-  }
-
-  allSavedNumbers.forEach((num) => {
-    let li = document.createElement("li");
-    li.textContent = num;
-    li.setAttribute("dir", "ltr"); // لإجبار اتجاه النص لليسار لليمين للأرقام
-    li.onclick = () => {
-      phoneInput.value = num;
-      clearQR();
-      hideSavedNumbersDropdown();
-    };
-    savedNumbersList.appendChild(li);
-  });
-
-  // بعد إعادة البناء، نقوم بتصفية القائمة بناءً على النص الحالي
-  filterSavedNumbers();
-}
-
-function saveNumber(num) {
-  let list = JSON.parse(localStorage.getItem(SAVED_NUMBERS_KEY) || "[]");
-  // إزالة الرقم إذا كان موجودًا وإضافته كآخر عنصر (لجعل الأحدث يظهر في القائمة)
-  list = list.filter((n) => n !== num);
-
-  if (list.length >= 10) {
-    // حد أقصى لحفظ الأرقام (مثلاً 10)
-    list.shift(); // حذف أقدم رقم
-  }
-
-  list.push(num);
-  localStorage.setItem(SAVED_NUMBERS_KEY, JSON.stringify(list));
-}
-
-/**
- * دالة البحث والتصفية الأساسية
- */
-function filterSavedNumbers() {
-  const searchTerm = phoneInput.value.trim();
-  const listItems = savedNumbersList.children;
-  let matchesFound = false;
-
-  for (let i = 0; i < listItems.length; i++) {
-    const listItem = listItems[i];
-    const numberText = listItem.textContent;
-
-    // البحث عن تطابق الرقم المُدخل مع بداية أي رقم محفوظ
-    if (searchTerm === "" || numberText.startsWith(searchTerm)) {
-      listItem.style.display = ""; // إظهار
-      matchesFound = true;
-    } else {
-      listItem.style.display = "none"; // إخفاء
+    if (numbers.length >= CONFIG.MAX_SAVED_NUMBERS) {
+      numbers.shift();
     }
-  }
 
-  // التحكم في إظهار وإخفاء القائمة المنسدلة بناءً على نتائج البحث
-  if (searchTerm.length > 0 && matchesFound) {
-    showSavedNumbersDropdown();
-  } else {
-    hideSavedNumbersDropdown();
-  }
-}
+    numbers.push(number);
+    this.setSavedNumbers(numbers);
+  },
+};
 
-// إضافة منطق إظهار وتصفية القائمة عند التركيز أو الكتابة
-phoneInput.addEventListener("focus", () => {
-  loadSavedNumbers(); // تأكد من تحميل الأرقام قبل التركيز
-  filterSavedNumbers();
-});
+// ==========================================
+// Validation
+// ==========================================
+const Validator = {
+  getPhoneValidationErrors(phone) {
+    const errors = [];
 
-// الحدث الجديد لتصفية القائمة أثناء الكتابة
-phoneInput.addEventListener("input", filterSavedNumbers);
+    if (phone.length !== CONFIG.PHONE_LENGTH) {
+      errors.push(
+        `يجب أن يحتوي على ${CONFIG.PHONE_LENGTH} رقماً (الحالي: ${phone.length})`
+      );
+    }
 
-// إخفاء القائمة عند النقر خارجها
-document.addEventListener("click", (e) => {
-  const isClickInside =
-    savedNumbersDropdown.contains(e.target) || phoneInput.contains(e.target);
-  if (!isClickInside) {
-    hideSavedNumbersDropdown();
-  }
-});
+    if (!phone.startsWith("01")) {
+      errors.push(`يجب أن يبدأ بـ '01' (الحالي: '${phone.substring(0, 2)}')`);
+    }
 
-/* ==========================
-4. وظائف التوليد الأساسية + التحقق الموحد
-========================== */
+    if (!/^\d+$/.test(phone)) {
+      errors.push("يجب أن يحتوي على أرقام فقط");
+    }
 
-/**
- * دالة التحقق الصامتة: تفحص الرقم وتُرجع مصفوفة بالأخطاء.
- * هذه الدالة موحدة ويتم استخدامها من contact-picker.js
- * @param {string} num - الرقم المراد التحقق منه.
- * @returns {string[]} - مصفوفة رسائل الأخطاء (فارغة إذا كان صالحاً).
- */
-function getPhoneValidationErrors(num) {
-  let errors = [];
+    return errors;
+  },
 
-  // 1. التحقق من الطول: يجب أن يكون 11 رقمًا
-  if (num.length !== 11) {
-    errors.push(
-      `- يجب أن يحتوي علي 11 رقمًا. (الرقم الحالي: ${num.length} ارقام)`
-    );
-  }
+  validatePhone(phone) {
+    const errors = this.getPhoneValidationErrors(phone);
 
-  // 2. التحقق من البداية: يجب أن يبدأ بـ "01"
-  if (!num.startsWith("01")) {
-    errors.push(
-      `- يجب أن يبدأ ب '01'. (الرقم الحالي يبدأ بـ '${num.substring(0, 2)}')`
-    );
-  }
+    if (errors.length > 0) {
+      this.showError("خطأ في رقم الهاتف", errors);
+      return false;
+    }
 
-  // 3. التحقق من الأرقام فقط
-  if (!/^\d+$/.test(num)) {
-    errors.push("- يجب أن يحتوي الرقم على أرقام فقط.");
-  }
+    return true;
+  },
 
-  return errors;
-}
+  showError(title, messages) {
+    const errorText = messages.map((msg) => `• ${msg}`).join("\n");
+    alert(`❌ ${title}:\n\n${errorText}`);
+  },
 
-/**
- * دالة التحقق العامة: تعرض التنبيهات وتُرجع boolean
- * يتم استدعاؤها قبل توليد QR
- * @param {string} num - الرقم المراد التحقق منه.
- * @returns {boolean} - true إذا كان الرقم صحيحًا، false وإلا.
- */
-function validatePhone(num) {
-  const errors = getPhoneValidationErrors(num);
+  showSuccess(message) {
+    alert(`✅ ${message}`);
+  },
+};
 
-  if (errors.length > 0) {
-    // عرض رسالة خطأ مفصلة إذا وُجدت أخطاء
-    alert("❌ فشل التحقق من الرقم المدخل:\n" + errors.join("\n"));
-    return false;
-  }
+// Expose for contact-picker.js
+window.getPhoneValidationErrors =
+  Validator.getPhoneValidationErrors.bind(Validator);
 
-  return true;
-}
+// ==========================================
+// QR Manager
+// ==========================================
+const QRManager = {
+  clear() {
+    DOM.qrBox.innerHTML = `
+            <div class="qr-placeholder">
+                <i class="fas fa-qrcode"></i>
+                <p>سيظهر كود QR هنا بعد إدخال البيانات</p>
+            </div>
+        `;
+    DOM.codeInfo.classList.add("hidden");
+    DOM.ussdCodeSpan.textContent = "";
+    DOM.ussdCodeBottom.textContent = "";
+    DOM.ussdCodeBottomContainer.classList.add("hidden");
+  },
 
-function generateQR(text) {
-  qrBox.innerHTML = "";
-  qrBox.classList.add("fade-in");
+  generate(text) {
+    DOM.qrBox.innerHTML = "";
+    DOM.qrBox.classList.add("fade-in");
 
-  new QRCode(qrBox, {
-    text: text,
-    width: 320,
-    height: 320,
-    colorDark: "#0d47a1",
-    colorLight: "#ffffff",
-    correctLevel: QRCode.CorrectLevel.H,
+    new QRCode(DOM.qrBox, {
+      text: text,
+      width: CONFIG.QR_SIZE,
+      height: CONFIG.QR_SIZE,
+      colorDark: "#e60000",
+      colorLight: "#ffffff",
+      correctLevel: QRCode.CorrectLevel.H,
+    });
+
+    setTimeout(() => DOM.qrBox.classList.remove("fade-in"), 500);
+  },
+
+  displayCode(ussdCode) {
+    DOM.ussdCodeSpan.textContent = ussdCode;
+    DOM.codeInfo.classList.remove("hidden");
+    DOM.ussdCodeBottom.textContent = ussdCode;
+    DOM.ussdCodeBottomContainer.classList.remove("hidden");
+  },
+};
+
+// ==========================================
+// Saved Numbers Manager
+// ==========================================
+const SavedNumbersManager = {
+  load(initialLoad = false) {
+    const numbers = StorageManager.getSavedNumbers();
+
+    if (initialLoad && numbers.length > 0 && !DOM.phoneInput.value) {
+      DOM.phoneInput.value = numbers[numbers.length - 1];
+    }
+
+    this.render(numbers);
+  },
+
+  render(numbers) {
+    DOM.savedNumbersList.innerHTML = "";
+
+    if (numbers.length === 0) {
+      this.hide();
+      return;
+    }
+
+    numbers.forEach((number) => {
+      const li = document.createElement("li");
+      li.textContent = number;
+      li.setAttribute("dir", "ltr");
+
+      li.addEventListener("click", () => {
+        DOM.phoneInput.value = number;
+        QRManager.clear();
+        this.hide();
+      });
+
+      DOM.savedNumbersList.appendChild(li);
+    });
+
+    this.filter();
+  },
+
+  filter() {
+    const searchTerm = DOM.phoneInput.value.trim();
+    const items = Array.from(DOM.savedNumbersList.children);
+    let hasMatches = false;
+
+    items.forEach((item) => {
+      const number = item.textContent;
+      const matches = !searchTerm || number.startsWith(searchTerm);
+
+      item.style.display = matches ? "" : "none";
+      if (matches) hasMatches = true;
+    });
+
+    if (searchTerm && hasMatches) {
+      this.show();
+    } else {
+      this.hide();
+    }
+  },
+
+  show() {
+    DOM.savedNumbersDropdown.classList.remove("hidden");
+  },
+
+  hide() {
+    DOM.savedNumbersDropdown.classList.add("hidden");
+  },
+};
+
+// ==========================================
+// Settings Manager
+// ==========================================
+const SettingsManager = {
+  open() {
+    DOM.prefixInput.value = StorageManager.getPrefix();
+    DOM.settingsDialog.classList.remove("hidden");
+  },
+
+  close() {
+    DOM.settingsDialog.classList.add("hidden");
+  },
+
+  save() {
+    const newPrefix = DOM.prefixInput.value.trim();
+
+    if (!newPrefix) {
+      Validator.showError("خطأ", ["الرجاء إدخال رمز كود USSD صالح"]);
+      return;
+    }
+
+    StorageManager.setPrefix(newPrefix);
+    QRManager.clear();
+    this.close();
+    Validator.showSuccess("تم حفظ رمز الكود بنجاح!");
+  },
+};
+
+// ==========================================
+// Code Generator
+// ==========================================
+const CodeGenerator = {
+  build(includeAmount = true) {
+    const phone = DOM.phoneInput.value.trim();
+    const amount = DOM.amountInput.value.trim();
+    const prefix = StorageManager.getPrefix();
+
+    SavedNumbersManager.hide();
+
+    // Validate phone
+    if (!Validator.validatePhone(phone)) {
+      return;
+    }
+
+    // Validate amount if required
+    if (includeAmount && (!amount || Number(amount) <= 0)) {
+      Validator.showError("خطأ في المبلغ", ["يجب إدخال مبلغ صحيح أكبر من صفر"]);
+      return;
+    }
+
+    // Build USSD code
+    const ussdCode = includeAmount
+      ? `${prefix}${phone}*${amount}#`
+      : `${prefix}${phone}*`;
+
+    const telUri = `tel:${encodeURIComponent(ussdCode)}`;
+
+    // Generate QR and display
+    QRManager.generate(telUri);
+    QRManager.displayCode(ussdCode);
+
+    // Save number
+    StorageManager.addNumber(phone);
+    SavedNumbersManager.load();
+  },
+};
+
+// ==========================================
+// Copy Manager
+// ==========================================
+const CopyManager = {
+  async copy() {
+    const code = DOM.ussdCodeSpan.textContent;
+
+    try {
+      await navigator.clipboard.writeText(code);
+      this.showSuccess();
+    } catch (err) {
+      console.error("Copy failed:", err);
+      Validator.showError("فشل النسخ", ["حاول نسخ الكود يدوياً"]);
+    }
+  },
+
+  showSuccess() {
+    const originalHTML = DOM.copyButton.innerHTML;
+    DOM.copyButton.innerHTML = '<i class="fas fa-check"></i>';
+    DOM.copyButton.style.background = "var(--success)";
+    DOM.copyButton.style.color = "var(--white)";
+
+    setTimeout(() => {
+      DOM.copyButton.innerHTML = originalHTML;
+      DOM.copyButton.style.background = "";
+      DOM.copyButton.style.color = "";
+    }, 1500);
+  },
+};
+
+// ==========================================
+// Call Manager
+// ==========================================
+const CallManager = {
+  makeCall() {
+    const ussdCode = DOM.ussdCodeSpan.textContent.trim();
+
+    if (!ussdCode) {
+      Validator.showError("خطأ", ["لا يوجد كود USSD للاتصال"]);
+      return;
+    }
+
+    const telUri = `tel:${encodeURIComponent(ussdCode)}`;
+    window.location.href = telUri;
+  },
+};
+
+// ==========================================
+// Event Listeners
+// ==========================================
+function initEventListeners() {
+  // Input changes clear QR
+  DOM.phoneInput.addEventListener("input", () => {
+    QRManager.clear();
+    SavedNumbersManager.filter();
   });
 
-  setTimeout(() => qrBox.classList.remove("fade-in"), 500);
+  DOM.amountInput.addEventListener("input", () => {
+    QRManager.clear();
+  });
+
+  // Phone input focus
+  DOM.phoneInput.addEventListener("focus", () => {
+    SavedNumbersManager.load();
+    SavedNumbersManager.filter();
+  });
+
+  // Generate buttons
+  DOM.genButton.addEventListener("click", () => CodeGenerator.build(true));
+  DOM.genFixedButton.addEventListener("click", () =>
+    CodeGenerator.build(false)
+  );
+
+  // Copy button
+  DOM.copyButton.addEventListener("click", () => CopyManager.copy());
+
+  // Call button
+  DOM.callButton.addEventListener("click", () => CallManager.makeCall());
+
+  // Settings
+  DOM.settingsBtn.addEventListener("click", () => SettingsManager.open());
+  DOM.savePrefixBtn.addEventListener("click", () => SettingsManager.save());
+
+  // Settings dialog backdrop
+  DOM.settingsDialog.addEventListener("click", (e) => {
+    if (e.target === DOM.settingsDialog) {
+      SettingsManager.close();
+    }
+  });
+
+  // Click outside to close dropdown
+  document.addEventListener("click", (e) => {
+    const isClickInside =
+      DOM.savedNumbersDropdown.contains(e.target) ||
+      DOM.phoneInput.contains(e.target);
+    if (!isClickInside) {
+      SavedNumbersManager.hide();
+    }
+  });
+
+  // Keyboard shortcuts
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      SettingsManager.close();
+      SavedNumbersManager.hide();
+    }
+  });
 }
 
-function buildCode(includeAmount = true) {
-  const phone = phoneInput.value.trim();
-  const prefix = loadPrefix(); // استخدام القيمة المحفوظة/الافتراضية
-  const amount = amountInput.value.trim();
-
-  // إخفاء القائمة المخصصة عند بدء التوليد
-  hideSavedNumbersDropdown();
-
-  // 1. التحقق من صحة الإدخال
-  if (!validatePhone(phone)) {
-    // استخدام الدالة التي تعرض التنبيه
-    return;
-  }
-
-  if (includeAmount && (!amount || Number(amount) <= 0)) {
-    alert("❌ لإنشاء كود كامل، يجب إدخال مبلغ صحيح أكبر من صفر.");
-    return;
-  }
-
-  // 2. بناء كود USSD
-  const ussd = includeAmount
-    ? `${prefix}${phone}*${amount}#`
-    : `${prefix}${phone}*`;
-
-  const telUri = "tel:" + encodeURIComponent(ussd);
-
-  // 3. توليد الـ QR وعرض المعلومات
-  generateQR(telUri);
-  ussdCodeSpan.innerText = ussd;
-  codeInfo.style.display = "block";
-
-  // 4. حفظ الرقم
-  saveNumber(phone);
-  loadSavedNumbers(); // تحديث القائمة بعد الحفظ
+// ==========================================
+// Initialization
+// ==========================================
+function init() {
+  SavedNumbersManager.load(true);
+  initEventListeners();
+  console.log("✅ USSD QR Generator initialized");
 }
 
-/* ==========================
-5. معالجة الأحداث والتحميل
-========================== */
-
-genButton.onclick = () => buildCode(true);
-genFixedButton.onclick = () => buildCode(false);
-
-copyButton.onclick = () => {
-  const txt = ussdCodeSpan.innerText;
-  navigator.clipboard
-    .writeText(txt)
-    .then(() => {
-      copyButton.innerText = "✅ تم النسخ!";
-      setTimeout(() => {
-        copyButton.innerText = "📋 نسخ الكود";
-      }, 1500);
-    })
-    .catch((err) => {
-      console.error("فشل في نسخ النص:", err);
-      alert("فشل في نسخ الكود، حاول يدويًا.");
-    });
-};
-
-// وظيفة التحميل عند بدء التشغيل
-window.onload = () => {
-  loadSavedNumbers(true); // تمرير true للإشارة إلى التحميل الأولي
-  loadPrefix(); // تحميل وعرض رمز الكود عند بدء التشغيل
-};
-
-// دالة بسيطة بديلة لـ toast
-function showToast(message, type = "error") {
-  // يمكنك هنا استخدام مكتبة تنبيهات أو alert بسيط
-  if (type === "error") {
-    console.error(message);
-    alert("خطأ: " + message);
-  } else {
-    console.log(message);
-  }
+// Start when DOM is ready
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", init);
+} else {
+  init();
 }
+
+// Expose functions for contact-picker.js
+window.clearQR = QRManager.clear.bind(QRManager);
+window.saveNumber = StorageManager.addNumber.bind(StorageManager);
+window.loadSavedNumbers = SavedNumbersManager.load.bind(SavedNumbersManager);
