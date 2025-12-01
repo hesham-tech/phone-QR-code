@@ -2,7 +2,10 @@
 const phoneInput = document.getElementById("phone");
 const amountInput = document.getElementById("amount");
 const displayPrefixInput = document.getElementById("displayPrefix"); // الحقل الجديد لعرض الـ Prefix
-const savedNumbersDatalist = document.getElementById("savedNumbers");
+// تم استبدال savedNumbersDatalist بالقوائم المخصصة
+const savedNumbersDropdown = document.getElementById("savedNumbersDropdown");
+const savedNumbersList = document.getElementById("savedNumbersList");
+
 const qrBox = document.getElementById("qrBox");
 const codeInfo = document.getElementById("codeInfo");
 const ussdCodeSpan = document.getElementById("ussdCode");
@@ -82,31 +85,71 @@ settingsDialog.onclick = (e) => {
 };
 
 /* ==========================
-3. وظائف LocalStorage للأرقام
+3. وظائف LocalStorage للأرقام + القائمة المخصصة
 ========================== */
+
+function hideSavedNumbersDropdown() {
+  savedNumbersDropdown.classList.add("hidden");
+}
+
+function showSavedNumbersDropdown() {
+  if (savedNumbersList.children.length > 0) {
+    savedNumbersDropdown.classList.remove("hidden");
+  }
+}
 
 function loadSavedNumbers() {
   let list = JSON.parse(localStorage.getItem("saved_numbers") || "[]");
-  savedNumbersDatalist.innerHTML = "";
+  savedNumbersList.innerHTML = ""; // مسح القائمة الحالية
+
+  if (list.length === 0) {
+    hideSavedNumbersDropdown();
+    return;
+  }
 
   list.forEach((num) => {
-    let option = document.createElement("option");
-    option.value = num;
-    savedNumbersDatalist.appendChild(option);
+    let li = document.createElement("li");
+    li.textContent = num;
+    li.setAttribute("dir", "ltr"); // لإجبار اتجاه النص لليسار لليمين للأرقام
+    li.onclick = () => {
+      phoneInput.value = num;
+      clearQR();
+      hideSavedNumbersDropdown();
+    };
+    savedNumbersList.appendChild(li);
   });
 
-  if (list.length > 0) {
+  // تعيين آخر رقم محفوظ في حقل الإدخال عند التحميل (سلوك الـ datalist القديم)
+  if (list.length > 0 && phoneInput.value === "") {
     phoneInput.value = list[list.length - 1];
   }
 }
 
 function saveNumber(num) {
   let list = JSON.parse(localStorage.getItem("saved_numbers") || "[]");
-  if (!list.includes(num)) {
-    list.push(num);
-    localStorage.setItem("saved_numbers", JSON.stringify(list));
+  // إزالة الرقم إذا كان موجودًا وإضافته كآخر عنصر (لجعل الأحدث يظهر أولًا/أخيراً)
+  list = list.filter((n) => n !== num);
+
+  if (list.length >= 10) {
+    // حد أقصى لحفظ الأرقام (مثلاً 10)
+    list.shift(); // حذف أقدم رقم
   }
+
+  list.push(num);
+  localStorage.setItem("saved_numbers", JSON.stringify(list));
 }
+
+// إضافة منطق إظهار القائمة عند التركيز على حقل الهاتف
+phoneInput.addEventListener("focus", showSavedNumbersDropdown);
+
+// إخفاء القائمة عند النقر خارجها
+document.addEventListener("click", (e) => {
+  const isClickInside =
+    savedNumbersDropdown.contains(e.target) || phoneInput.contains(e.target);
+  if (!isClickInside) {
+    hideSavedNumbersDropdown();
+  }
+});
 
 /* ==========================
 4. وظائف التوليد الأساسية
@@ -137,6 +180,9 @@ function buildCode(includeAmount = true) {
   const prefix = loadPrefix(); // استخدام القيمة المحفوظة/الافتراضية
   const amount = amountInput.value.trim();
 
+  // إخفاء القائمة المخصصة عند بدء التوليد
+  hideSavedNumbersDropdown();
+
   // 1. التحقق من صحة الإدخال
   if (!validatePhone(phone)) {
     alert("❌ الرجاء إدخال رقم مستفيد صحيح (8-15 رقم).");
@@ -162,7 +208,7 @@ function buildCode(includeAmount = true) {
 
   // 4. حفظ الرقم
   saveNumber(phone);
-  loadSavedNumbers();
+  loadSavedNumbers(); // تحديث القائمة بعد الحفظ
 }
 
 /* ==========================

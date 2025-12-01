@@ -70,6 +70,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // 4. تحديث قائمة savedNumbers (دالة من script.js)
+    // هذا الاستدعاء مهم ليقوم بتحديث القائمة المخصصة الجديدة
     if (typeof loadSavedNumbers === "function") {
       loadSavedNumbers();
     }
@@ -96,6 +97,7 @@ document.addEventListener("DOMContentLoaded", () => {
       li.style.cursor = "pointer";
       li.style.padding = "12px";
       li.style.borderBottom = "1px solid #eee";
+      li.setAttribute("dir", "ltr"); // إجبار اتجاه الأرقام
 
       li.addEventListener("click", () => {
         setPhoneNumber(num);

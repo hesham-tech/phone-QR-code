@@ -72,6 +72,7 @@ label {
 
 .input-group {
   margin-bottom: 20px;
+  position: relative; /* هام للقائمة المخصصة لتعمل بشكل صحيح */
 }
 
 input[type="text"],
@@ -430,3 +431,48 @@ input[type="number"]:focus {
 }
 
 /* تعديل هام: إضافة هامش سفلي للـ body لتجنب اختفاء المحتوى تحت الفوتر */
+
+/* ==========================
+   تنسيقات القائمة المنسدلة المخصصة
+   ========================== */
+
+.saved-numbers-dropdown {
+  position: absolute;
+  top: 100%; /* وضع القائمة أسفل حقل الإدخال */
+  right: 0;
+  width: 100%;
+  max-height: 200px;
+  overflow-y: auto;
+  background: var(--card-background);
+  border: 1px solid var(--primary-color);
+  border-top: none;
+  border-radius: 0 0 12px 12px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+  z-index: 50; /* لضمان ظهورها فوق العناصر الأخرى */
+}
+
+.saved-numbers-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.saved-numbers-list li {
+  padding: 12px 15px;
+  border-bottom: 1px solid #f0f0f0;
+  cursor: pointer;
+  transition: background-color 0.15s;
+  font-size: 16px;
+  color: #444;
+  text-align: left; /* لعرض الأرقام بشكل صحيح */
+  direction: ltr; /* لإجبار اتجاه الأرقام من اليسار لليمين */
+}
+
+.saved-numbers-list li:last-child {
+  border-bottom: none;
+}
+
+.saved-numbers-list li:hover {
+  background-color: #f6f9fc;
+  color: var(--primary-color);
+}

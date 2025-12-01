@@ -52,10 +52,10 @@
             <div class="input-with-button">
               <input
                 id="phone"
-                list="savedNumbers"
                 type="text"
                 placeholder="الرقم المحول اليه مثال : 01012345678 "
                 inputmode="numeric"
+                autocomplete="off"
               />
 
               <button id="contactPickerBtn" title="اختيار من جهات الاتصال">
@@ -63,7 +63,12 @@
               </button>
             </div>
 
-            <datalist id="savedNumbers"></datalist>
+            <div
+              id="savedNumbersDropdown"
+              class="saved-numbers-dropdown hidden"
+            >
+              <ul id="savedNumbersList" class="saved-numbers-list"></ul>
+            </div>
           </div>
 
           <div class="input-group">
@@ -113,22 +118,7 @@
         تم التطوير بواسطة : <strong>hesham mohamed</strong>
       </div>
     </footer>
-    <!-- <script src="sw.js"></script> -->
     <script src="script.js"></script>
     <script src="contact-picker.js"></script>
-    <!-- <script>
-      if ("serviceWorker" in navigator) {
-        window.addEventListener("load", () => {
-          navigator.serviceWorker
-            .register("/phone-QR-code/sw.js")
-            .then((registration) => {
-              console.log("Service Worker registered: ", registration.scope);
-            })
-            .catch((err) => {
-              console.error("Service Worker registration failed: ", err);
-            });
-        });
-      }
-    </script> -->
   </body>
 </html>
