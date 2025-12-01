@@ -312,14 +312,13 @@ const CopyManager = {
 
   showSuccess() {
     const originalHTML = DOM.copyButton.innerHTML;
-    DOM.copyButton.innerHTML = '<i class="fas fa-check"></i>';
+    DOM.copyButton.innerHTML =
+      '<i class="fas fa-check"></i><span>تم النسخ!</span>';
     DOM.copyButton.style.background = "var(--success)";
-    DOM.copyButton.style.color = "var(--white)";
 
     setTimeout(() => {
       DOM.copyButton.innerHTML = originalHTML;
       DOM.copyButton.style.background = "";
-      DOM.copyButton.style.color = "";
     }, 1500);
   },
 };

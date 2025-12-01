@@ -117,19 +117,28 @@
                 </button>
               </div>
 
-              <!-- Code Display -->
-              <div id="codeInfo" class="code-display hidden">
+              <!-- Code Display - Mobile Only -->
+              <div
+                id="codeInfo"
+                class="code-display code-display-mobile hidden"
+              >
                 <div class="code-header">
-                  <span class="code-label">كود USSD</span>
-                  <button id="copyBtn" class="btn-icon" title="نسخ الكود">
+                  <button
+                    id="copyBtn"
+                    class="btn-copy-with-text"
+                    title="نسخ الكود"
+                  >
                     <i class="fas fa-copy"></i>
+                    <span>نسخ الكود</span>
                   </button>
                 </div>
                 <div class="code-value" id="ussdCode" dir="ltr"></div>
-                <button id="callBtn" class="btn btn-call">
-                  <i class="fas fa-phone-alt"></i>
-                  <span>اتصال مباشر للتحويل</span>
-                </button>
+                <div class="call-btn-wrapper">
+                  <button id="callBtn" class="btn btn-call">
+                    <i class="fas fa-phone-alt"></i>
+                    <span>اتصال مباشر للتحويل</span>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
