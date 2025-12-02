@@ -5,6 +5,7 @@ const CONFIG = {
   DEFAULT_PREFIX: "*9*7*",
   PREFIX_STORAGE_KEY: "ussd_prefix",
   SAVED_NUMBERS_KEY: "saved_numbers",
+  THEME_STORAGE_KEY: "app_theme",
   MAX_SAVED_NUMBERS: 10,
   PHONE_LENGTH: 11,
   QR_SIZE: 300,
@@ -31,6 +32,7 @@ const DOM = {
   settingsBtn: document.getElementById("settingsBtn"),
   prefixInput: document.getElementById("prefixInput"),
   savePrefixBtn: document.getElementById("savePrefixBtn"),
+  currentPrefixDisplay: document.getElementById("currentPrefixDisplay"),
 };
 
 // ==========================================
@@ -66,6 +68,14 @@ const StorageManager = {
 
     numbers.push(number);
     this.setSavedNumbers(numbers);
+  },
+
+  getTheme() {
+    return localStorage.getItem(CONFIG.THEME_STORAGE_KEY) || "vodafone";
+  },
+
+  setTheme(theme) {
+    localStorage.setItem(CONFIG.THEME_STORAGE_KEY, theme);
   },
 };
 
@@ -232,7 +242,16 @@ const SavedNumbersManager = {
 // ==========================================
 const SettingsManager = {
   open() {
-    DOM.prefixInput.value = StorageManager.getPrefix();
+    const currentPrefix = StorageManager.getPrefix();
+    DOM.prefixInput.value = currentPrefix;
+    DOM.currentPrefixDisplay.textContent = currentPrefix;
+
+    // Highlight active theme
+    const currentTheme = StorageManager.getTheme();
+    document.querySelectorAll(".theme-btn").forEach((btn) => {
+      btn.classList.toggle("active", btn.dataset.theme === currentTheme);
+    });
+
     DOM.settingsDialog.classList.remove("hidden");
   },
 
@@ -251,7 +270,27 @@ const SettingsManager = {
     StorageManager.setPrefix(newPrefix);
     QRManager.clear();
     this.close();
-    Validator.showSuccess("تم حفظ رمز الكود بنجاح!");
+    Validator.showSuccess("تم حفظ الإعدادات بنجاح!");
+  },
+};
+
+// ==========================================
+// Theme Manager
+// ==========================================
+const ThemeManager = {
+  apply(theme) {
+    document.body.setAttribute("data-theme", theme);
+    StorageManager.setTheme(theme);
+
+    // Update active state
+    document.querySelectorAll(".theme-btn").forEach((btn) => {
+      btn.classList.toggle("active", btn.dataset.theme === theme);
+    });
+  },
+
+  init() {
+    const savedTheme = StorageManager.getTheme();
+    this.apply(savedTheme);
   },
 };
 
@@ -376,6 +415,13 @@ function initEventListeners() {
   DOM.settingsBtn.addEventListener("click", () => SettingsManager.open());
   DOM.savePrefixBtn.addEventListener("click", () => SettingsManager.save());
 
+  // Theme buttons
+  document.querySelectorAll(".theme-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      ThemeManager.apply(btn.dataset.theme);
+    });
+  });
+
   // Settings dialog backdrop
   DOM.settingsDialog.addEventListener("click", (e) => {
     if (e.target === DOM.settingsDialog) {
@@ -406,6 +452,7 @@ function initEventListeners() {
 // Initialization
 // ==========================================
 function init() {
+  ThemeManager.init();
   SavedNumbersManager.load(true);
   initEventListeners();
   console.log("✅ USSD QR Generator initialized");
