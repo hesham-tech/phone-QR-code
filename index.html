@@ -111,34 +111,34 @@
                   <i class="fas fa-qrcode"></i>
                   <span>إنشاء QR كامل (رقم + مبلغ)</span>
                 </button>
+
+                <!-- Code Display - Mobile Only -->
+                <div
+                  id="codeInfo"
+                  class="code-display code-display-mobile hidden"
+                >
+                  <div class="code-header">
+                    <button
+                      id="copyBtn"
+                      class="btn-copy-with-text"
+                      title="نسخ الكود"
+                    >
+                      <i class="fas fa-copy"></i>
+                      <span>نسخ الكود</span>
+                    </button>
+                    <div class="code-value" id="ussdCode" dir="ltr"></div>
+                  </div>
+                  <div class="call-btn-wrapper">
+                    <button id="callBtn" class="btn btn-call">
+                      <i class="fas fa-phone-alt"></i>
+                      <span>اتصال مباشر للتحويل</span>
+                    </button>
+                  </div>
+                </div>
                 <button id="genFixed" class="btn btn-secondary">
                   <i class="fas fa-link"></i>
                   <span>إنشاء QR (رقم فقط)</span>
                 </button>
-              </div>
-
-              <!-- Code Display - Mobile Only -->
-              <div
-                id="codeInfo"
-                class="code-display code-display-mobile hidden"
-              >
-                <div class="code-header">
-                  <button
-                    id="copyBtn"
-                    class="btn-copy-with-text"
-                    title="نسخ الكود"
-                  >
-                    <i class="fas fa-copy"></i>
-                    <span>نسخ الكود</span>
-                  </button>
-                </div>
-                <div class="code-value" id="ussdCode" dir="ltr"></div>
-                <div class="call-btn-wrapper">
-                  <button id="callBtn" class="btn btn-call">
-                    <i class="fas fa-phone-alt"></i>
-                    <span>اتصال مباشر للتحويل</span>
-                  </button>
-                </div>
               </div>
             </div>
           </div>
